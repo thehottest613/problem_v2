@@ -15,14 +15,6 @@ export const handleJoinGroup = async (io, socket, data) => {
   try {
     const { groupId } = data;
 
-    if (!checkUserName(socket.user)) {
-      socket.emit("join-group-error", {
-        success: false,
-        message: "user expired",
-      });
-      return;
-    }
-
     console.log(
       `User ${socket.user.username} attempting to join group ${groupId}`
     );
