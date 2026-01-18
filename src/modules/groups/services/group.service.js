@@ -117,8 +117,6 @@ export const createGroup = asyncHandelr(async (req, res, next) => {
 });
 
 export const getUserGroups = asyncHandelr(async (req, res, next) => {
-  if (!checkUserName(req.user))
-    throw new Error("You have to change your nick name");
   const userId = req.user._id;
   const allGroups = await GroupModel.find({ isActive: true }).select(
     "-messages"

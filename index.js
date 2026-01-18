@@ -21,13 +21,15 @@ bootstap(app ,express)
 const io = initializeSocket(server);
 
 process.on('unhandledRejection', (reason, promise) => {
-    throw Error(error.message.toString(), { cause: 403 })
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Optionally throw or handle gracefully without crashing
+  // throw new Error(reason?.message || 'Unhandled rejection', { cause: 403 });
 });
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-    throw Error(error.message.toString(), { cause: 403 })
-    process.exit(1);
+  console.error('Uncaught Exception:', error);
+  // throw new Error(error.message, { cause: 403 }); // Avoid re-throwing if it causes loops
+  process.exit(1);
 });
 
 
@@ -35,6 +37,8 @@ server.listen(port, () => {
   console.log(`🚀 Server is running on port ${port} mr abdo welcome`);
   console.log(`📡 Socket.io server initialized`);
 });
+
+
 
 
 
