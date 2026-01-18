@@ -1434,10 +1434,16 @@ export const updateComment = asyncHandelr(async (req, res) => {
 
       // Only notify if commenter is not the post owner
       if (postOwner._id.toString() !== commenter._id.toString()) {
-        const notificationTitle = "Comment Updated";
-        const notificationBody = `${
-          commenter.username || "A user"
-        } updated their comment on your post`;
+        const notificationTitle = {
+          en: "Comment Updated",
+          ar: "تم تحديث التعليق",
+        };
+        const notificationBody = {
+          en: `${
+            commenter.username || "A user"
+          } updated their comment on your post`,
+          ar: `${commenter.username || "مستخدم"} قام بتحديث تعليقه على منشورك`,
+        };
 
         try {
           // Store notification in database
