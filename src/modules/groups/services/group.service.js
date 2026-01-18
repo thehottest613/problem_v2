@@ -3,18 +3,30 @@ import { GroupModel } from "../../../DB/models/group.model.js";
 import { getIO } from "../../socketServer/socketIndex.js";
 import { groupCounters } from "../../socketServer/socketIndex.js";
 import { checkUserName } from "../../socketServer/utils/checkUsername.js";
+import { updateGroupCounters } from "../../socketServer/utils/socket.helper.js";
 
 export const joinAsActive = asyncHandelr(async (req, res, next) => {
   const userId = req.user._id;
   const { groupId } = req.body;
 
   try {
-    if (!checkUserName(req.user))
-      throw new Error("user expired");
+    if (!checkUserName(req.user)) throw new Error("user expired");
     const group = await checkCanJoinAsActive(groupId, userId);
     await group.addActiveUser(userId);
-
+    const userRole = group.getUserRole(userId);
+    await updateGroupCounters(
+      groupId,
+      userRole,
+      "indatabase",
+      group.activeUsers.length
+    );
     const io = getIO();
+    io.emit("group-counters-updated", {
+      groupId: group._id,
+      activeUsers: groupCounters.get(groupId)?.active || 0,
+      guests: groupCounters.get(groupId)?.guests || 0,
+      indatabase: groupCounters.get(groupId)?.indatabase || 0,
+    });
     io.to(`group-${groupId}`).emit("user-become-active", {
       userId: userId.toString(),
       username: req.user.username || "Unknown",
@@ -61,8 +73,21 @@ export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
   await group.removeUser(userId);
   await group.save();
 
-  // Emit event to the group room
+  await updateGroupCounters(
+    groupId,
+    userRole,
+    "indatabase",
+    group.activeUsers.length
+  );
+
   const io = getIO();
+  io.emit("group-counters-updated", {
+    groupId: group._id,
+    activeUsers: groupCounters.get(groupId)?.active || 0,
+    guests: groupCounters.get(groupId)?.guests || 0,
+    indatabase: groupCounters.get(groupId)?.indatabase || 0,
+  });
+
   io.to(`group-${groupId}`).emit("user-left-group", {
     userId: userId.toString(),
     username: req.user.username || "Unknown",
@@ -78,8 +103,7 @@ export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
 });
 
 export const createGroup = asyncHandelr(async (req, res, next) => {
-  if (!checkUserName(req.user))
-    throw new Error("user expired");
+  if (!checkUserName(req.user)) throw new Error("user expired");
   const userId = req.user._id;
   const { name, description, avatar } = req.body;
 

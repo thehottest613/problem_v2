@@ -158,11 +158,18 @@ const kickInactiveUsers = async () => {
         );
 
         // Update counters
-        updateGroupCounters(user.groupId, userRole, "leave");
+        await updateGroupCounters(user.groupId, userRole, "leave", null);
+        await updateGroupCounters(
+          user.groupId,
+          userRole,
+          "indatabase",
+          group.activeUsers.length
+        );
         cleanupIo.emit("group-counters-updated", {
           groupId: group._id,
           activeUsers: groupCounters.get(user.groupId)?.active || 0,
           guests: groupCounters.get(user.groupId)?.guests || 0,
+          indatabase: groupCounters.get(user.groupId)?.indatabase || 0,
         });
 
         // Notify

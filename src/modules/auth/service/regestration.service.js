@@ -1056,6 +1056,16 @@ cron.schedule("0 * * * *", async () => {
   await Posttt.deleteMany({ user: { $in: userIds } });
   await Commenttt.deleteMany({ user: { $in: userIds } });
 
+  const users = await Usermodel.find(
+    { _id: { $in: userIds } },
+    { email: 1, phone: 1 }
+  );
+  const contacts = users.flatMap((user) =>
+    [user.email, user.phone].filter(Boolean)
+  );
+
+  await ReportModel.deleteMany({ contact: { $in: contacts } });
+
   console.log(
     `🗑️ تم حذف جميع البوستات والكومنتات لـ ${userIds.length} مستخدم(ين) منتهية الاسم`
   );
@@ -1687,7 +1697,7 @@ export const deleteComment = asyncHandelr(async (req, res) => {
             postId: post._id.toString(),
             commentId: comment._id.toString(),
             commenterUsername: commenterUsername || "User",
-            deletedText: commentText.substring(0, 100), // First 100 chars
+            deletedText: commentText.substring(0, 100),
             wasDeletedByAdmin: !isCommentOwner,
           },
         });

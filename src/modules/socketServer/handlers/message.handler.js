@@ -1,6 +1,7 @@
 import { GroupModel } from "../../../DB/models/group.model.js";
 import { updateUserLastMessage } from "../socketIndex.js";
 import { checkUserName } from "../utils/checkUsername.js";
+import { sendGroupMessageNotifications } from "../utils/groupNotifications.js";
 
 export const handleSendGroupMessage = async (io, socket, data) => {
   try {
@@ -79,7 +80,16 @@ export const handleSendGroupMessage = async (io, socket, data) => {
     group.messages.push(message);
     await group.save();
 
+
     const savedMessage = group.messages[group.messages.length - 1];
+    
+    await sendGroupMessageNotifications(
+      group,
+      savedMessage,
+      socket.user,
+      type,
+      content
+    );
 
     const messageWithSender = {
       ...savedMessage.toObject(),

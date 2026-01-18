@@ -68,12 +68,13 @@ const checkAndUpdateGroupActivity = async (socket, io, userId) => {
 
     const userRole = group.getUserRole(userId);
 
-    updateGroupCounters(lastGroupId, userRole, "leave");
+    await updateGroupCounters(lastGroupId, userRole, "leave" , null);
 
     io.emit("group-counters-updated", {
       groupId: lastGroupId,
       activeUsers: groupCounters.get(lastGroupId)?.active || 0,
       guests: groupCounters.get(lastGroupId)?.guests || 0,
+      indatabase: groupCounters.get(lastGroupId)?.indatabase || 0,
     });
 
     const room = io.sockets.adapter.rooms.get(`group-${lastGroupId}`);

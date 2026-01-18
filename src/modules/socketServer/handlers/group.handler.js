@@ -37,11 +37,12 @@ export const handleJoinGroup = async (io, socket, data) => {
     trackUserActivity(socket.id, socket.user._id, groupId, userRole, true);
 
     ////////////////
-    updateGroupCounters(groupId, userRole, "join");
+    await updateGroupCounters(groupId, userRole, "join", null);
     io.emit("group-counters-updated", {
       groupId: group._id,
       activeUsers: groupCounters.get(groupId).active || 0,
       guests: groupCounters.get(groupId).guests || 0,
+      indatabase: groupCounters.get(groupId)?.indatabase || 0,
     });
     /////////////////////
 
@@ -77,7 +78,7 @@ export const handleJoinGroup = async (io, socket, data) => {
 export const handleLeaveGroup = async (io, socket, data) => {
   try {
     const { groupId } = data;
-    console.log(groupId)
+    console.log(groupId);
     const group = await GroupModel.findById(groupId);
     if (!group) {
       socket.emit("leave-group-error", {
@@ -98,11 +99,12 @@ export const handleLeaveGroup = async (io, socket, data) => {
     const userRole = group.getUserRole(socket.user._id);
     updateFlag(socket.id);
     ////////////////
-    updateGroupCounters(groupId, userRole, "leave");
+    await updateGroupCounters(groupId, userRole, "leave", null);
     io.emit("group-counters-updated", {
       groupId: group._id,
       activeUsers: groupCounters.get(groupId).active || 0,
       guests: groupCounters.get(groupId).guests || 0,
+      indatabase: groupCounters.get(groupId)?.indatabase || 0,
     });
     /////////////////////
 
