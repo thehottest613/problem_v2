@@ -1606,7 +1606,7 @@ export const deleteComment = asyncHandelr(async (req, res) => {
 
     // Check if user is authorized (comment owner or admin)
     const isCommentOwner = comment.user._id.toString() === userId.toString();
-    const isAdmin = req.user.role === "admin";
+    const isAdmin = req.user.role === "Owner";
 
     if (!isCommentOwner && !isAdmin) {
       return res.status(403).json({
