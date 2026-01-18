@@ -48,7 +48,7 @@ export const updateGroupActivity = (groupId) => {
 export const markGroupForDeletion = (groupId) => {
   groupLastActivity.set(groupId, {
     lastUserLeft: new Date(),
-    deletionScheduled: new Date(Date.now() + 60 * 60 * 1000),
+    deletionScheduled: new Date(Date.now() + 5 * 60 * 1000),
   });
 };
 export const trackUserActivity = (
@@ -65,7 +65,16 @@ export const trackUserActivity = (
   const userSessions = userGroupActivity.get(socketId);
 
   for (const [existingGroupId, activity] of userSessions.entries()) {
-    activity.flag = false;
+    activity.flag = existingGroupId === groupId;
+  }
+
+  if (userSessions.has(groupId)) {
+    const activity = userSessions.get(groupId);
+
+    activity.flag = true;
+    activity.userRole = userRole;
+    activity.lastActive = new Date();
+    return;
   }
 
   userSessions.set(groupId, {
@@ -74,7 +83,7 @@ export const trackUserActivity = (
     userRole,
     lastActive: new Date(),
     lastMessageSent: new Date(),
-    flag,
+    flag: true,
   });
 };
 

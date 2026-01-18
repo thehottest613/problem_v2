@@ -30,32 +30,16 @@ const deleteInactiveGroups = async () => {
           continue;
         }
 
-        // Collect all relevant user IDs (admin + active users) to notify
-        const membersToNotify = new Set();
-        membersToNotify.add(group.admin.toString());
-        group.activeUsers.forEach((activeUser) => {
-          membersToNotify.add(activeUser.user.toString());
-        });
 
-        // Delete the group
         await GroupModel.findByIdAndDelete(groupId);
         console.log(`Cleanup: Deleted inactive group: ${groupId}`);
 
-        // Emit to the group room (existing)
-        cleanupIo.to(`group-${groupId}`).emit("group-deleted", {
+        cleanupIo.emit("group-deleted", {
           success: true,
           groupId,
           message: "Group has been deleted due to inactivity",
         });
 
-        // Additionally, emit to each member's personal user-groups room
-        membersToNotify.forEach((memberId) => {
-          cleanupIo.to(`user-groups-${memberId}`).emit("group-deleted", {
-            success: true,
-            groupId,
-            message: "Group has been deleted due to inactivity",
-          });
-        });
 
         groupLastActivity.delete(groupId);
       } catch (error) {
@@ -75,7 +59,7 @@ const kickInactiveUsers = async () => {
 
   try {
     const now = new Date();
-    const THIRTY_MINUTES = 20 * 60 * 1000;
+    const THIRTY_MINUTES = 1 * 60 * 1000;
     const usersToKick = [];
 
     // Step 1: Collect candidates and clean guests/admins
@@ -249,12 +233,12 @@ export const startCleanupIntervals = (ioInstance) => {
   setInterval(() => {
     console.log("Cleanup: Running deleteInactiveGroups check...");
     deleteInactiveGroups();
-  }, 15 * 60 * 1000);
+  }, 2 * 60 * 1000);
 
   setInterval(() => {
     console.log("Cleanup: Running kickInactiveUsers check...");
     kickInactiveUsers();
-  }, 10 * 60 * 1000);
+  }, 5 * 60 * 1000);
 
   console.log("Cleanup: Group cleanup intervals started");
 };
