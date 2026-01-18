@@ -10,7 +10,7 @@ export const joinAsActive = asyncHandelr(async (req, res, next) => {
 
   try {
     if (!checkUserName(req.user))
-      throw new Error("You have to change your nick name");
+      throw new Error("user expired");
     const group = await checkCanJoinAsActive(groupId, userId);
     await group.addActiveUser(userId);
 
@@ -38,8 +38,6 @@ export const joinAsActive = asyncHandelr(async (req, res, next) => {
 });
 
 export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
-  if (!checkUserName(req.user))
-    throw new Error("You have to change your nick name");
   const userId = req.user._id;
   const { groupId } = req.body; // Assuming route is /groups/:groupId/leave-active or similar
 
@@ -154,8 +152,6 @@ export const getUserGroups = asyncHandelr(async (req, res, next) => {
 });
 
 export const getGroupMessages = asyncHandelr(async (req, res, next) => {
-  if (!checkUserName(req.user))
-    throw new Error("You have to change your nick name");
   const { groupId } = req.params;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
