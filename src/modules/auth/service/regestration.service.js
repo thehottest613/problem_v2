@@ -1064,7 +1064,7 @@ cron.schedule("0 * * * *", async () => {
   const result = await Usermodel.updateMany(
     { _id: { $in: userIds } },
     {
-      $set: { username: null },
+      $set: { username: null, ImageId: null },
       $unset: { lastUsernameUpdate: "" },
     }
   );
