@@ -77,7 +77,7 @@ export const handleJoinGroup = async (io, socket, data) => {
 export const handleLeaveGroup = async (io, socket, data) => {
   try {
     const { groupId } = data;
-    console.lgo(groupId)
+    console.log(groupId)
     const group = await GroupModel.findById(groupId);
     if (!group) {
       socket.emit("leave-group-error", {
