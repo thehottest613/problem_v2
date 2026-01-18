@@ -23,7 +23,7 @@ export const initializeSocket = (server) => {
   });
   io.use(authMiddleware);
   io.on("connection", (socket) => {
-    console.log(`User connected: ${socket.user.username} (${socket.id})`);
+    console.log(`User connected: ${socket.user.username||"null"} (${socket.id})`);
     setupConnectionEvents(io, socket);
     setupGroupEvents(io, socket);
     setupMessageEvents(io, socket);
