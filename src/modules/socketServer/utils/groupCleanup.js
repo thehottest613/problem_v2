@@ -59,7 +59,7 @@ const kickInactiveUsers = async () => {
 
   try {
     const now = new Date();
-    const THIRTY_MINUTES = 2 * 60 * 1000;
+    const THIRTY_MINUTES = 20 * 60 * 1000;
     const usersToKick = [];
 
     // Step 1: Collect candidates and clean guests/admins
@@ -238,7 +238,7 @@ export const startCleanupIntervals = (ioInstance) => {
   setInterval(() => {
     console.log("Cleanup: Running kickInactiveUsers check...");
     kickInactiveUsers();
-  }, 1 * 60 * 1000);
+  }, 5 * 60 * 1000);
 
   console.log("Cleanup: Group cleanup intervals started");
 };

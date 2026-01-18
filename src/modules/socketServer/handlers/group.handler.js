@@ -19,6 +19,16 @@ export const handleJoinGroup = async (io, socket, data) => {
       `User ${socket.user.username} attempting to join group ${groupId}`
     );
 
+    const roomName = `group-${groupId}`;
+
+    if (socket.rooms.has(roomName)) {
+      socket.emit("join-group-error", {
+        success: false,
+        message: "you are already joined",
+      });
+      return;
+    }
+
     const group = await GroupModel.findById(groupId);
     if (!group) {
       socket.emit("join-group-error", {
@@ -28,9 +38,10 @@ export const handleJoinGroup = async (io, socket, data) => {
       return;
     }
 
-    updateGroupActivity(groupId);
 
     socket.join(`group-${groupId}`);
+
+    updateGroupActivity(groupId);
 
     const userRole = group.getUserRole(socket.user._id);
 
@@ -78,7 +89,17 @@ export const handleJoinGroup = async (io, socket, data) => {
 export const handleLeaveGroup = async (io, socket, data) => {
   try {
     const { groupId } = data;
-    console.log(groupId);
+
+    const roomName = `group-${groupId}`;
+
+    if (!socket.rooms.has(roomName)) {
+      socket.emit("leave-group-error", {
+        success: false,
+        message: "you are already leaved",
+      });
+      return;
+    }
+
     const group = await GroupModel.findById(groupId);
     if (!group) {
       socket.emit("leave-group-error", {
