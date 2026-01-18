@@ -2,7 +2,7 @@ import { GroupModel } from "../../../DB/models/group.model.js";
 import { groupLastActivity, userGroupActivity } from "../socketIndex.js";
 import { groupCounters } from "../socketIndex.js";
 import { updateGroupCounters } from "../utils/socket.helper.js";
-import { removeUserActivity } from "../socketIndex.js"; // FIX: Added import for removeUserActivity
+import { removeUserActivity , markGroupForDeletion} from "../socketIndex.js"; // FIX: Added import for removeUserActivity
 
 let cleanupIo = null;
 
@@ -59,7 +59,7 @@ const kickInactiveUsers = async () => {
 
   try {
     const now = new Date();
-    const THIRTY_MINUTES = 1 * 60 * 1000;
+    const THIRTY_MINUTES = 2 * 60 * 1000;
     const usersToKick = [];
 
     // Step 1: Collect candidates and clean guests/admins
@@ -238,7 +238,7 @@ export const startCleanupIntervals = (ioInstance) => {
   setInterval(() => {
     console.log("Cleanup: Running kickInactiveUsers check...");
     kickInactiveUsers();
-  }, 5 * 60 * 1000);
+  }, 1 * 60 * 1000);
 
   console.log("Cleanup: Group cleanup intervals started");
 };
