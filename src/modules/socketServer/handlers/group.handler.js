@@ -9,7 +9,7 @@ import {
   updateFlag,
 } from "../socketIndex.js";
 
-import {checkUserName} from "../utils/checkUsername.js"
+import { checkUserName } from "../utils/checkUsername.js";
 
 export const handleJoinGroup = async (io, socket, data) => {
   try {
@@ -84,9 +84,16 @@ export const handleJoinGroup = async (io, socket, data) => {
 
 export const handleLeaveGroup = async (io, socket, data) => {
   try {
-    const {groupId} = data;
+    const { groupId } = data;
 
-    
+    const group = await GroupModel.findById(groupId);
+    if (!group) {
+      socket.emit("leave-group-error", {
+        success: false,
+        message: "Group not found",
+      });
+      return;
+    }
 
     socket.leave(`group-${groupId}`);
 
@@ -96,9 +103,8 @@ export const handleLeaveGroup = async (io, socket, data) => {
       timestamp: new Date(),
     });
 
-    const group = await GroupModel.findById(groupId);
     const userRole = group.getUserRole(socket.user._id);
-    updateFlag(socket.id)
+    updateFlag(socket.id);
     ////////////////
     updateGroupCounters(groupId, userRole, "leave");
     io.emit("group-counters-updated", {
@@ -107,9 +113,8 @@ export const handleLeaveGroup = async (io, socket, data) => {
       guests: groupCounters.get(groupId).guests || 0,
     });
     /////////////////////
-    
-    console.log(`User ${socket.user.username} left group ${groupId}`);
 
+    console.log(`User ${socket.user.username} left group ${groupId}`);
 
     const room = io.sockets.adapter.rooms.get(`group-${groupId}`);
     if (!room || room.size === 0) {
