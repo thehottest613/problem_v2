@@ -81,7 +81,7 @@ export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
 
 export const createGroup = asyncHandelr(async (req, res, next) => {
   if (!checkUserName(req.user))
-    throw new Error("You have to change your nick name");
+    throw new Error("user expired");
   const userId = req.user._id;
   const { name, description, avatar } = req.body;
 
