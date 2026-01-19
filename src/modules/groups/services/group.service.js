@@ -81,12 +81,6 @@ export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
   );
 
   const io = getIO();
-  io.emit("group-counters-updated", {
-    groupId: group._id,
-    activeUsers: groupCounters.get(groupId)?.active || 0,
-    guests: groupCounters.get(groupId)?.guests || 0,
-    indatabase: groupCounters.get(groupId)?.indatabase || 0,
-  });
 
   io.to(`group-${groupId}`).emit("user-left-group", {
     userId: userId.toString(),
@@ -124,7 +118,7 @@ export const createGroup = asyncHandelr(async (req, res, next) => {
       description: group.description,
       admin: group.admin,
       activeUsersCount: group.activeUsers.length,
-      imageId:group.imageId || undefined,
+      imageId: group.imageId || undefined,
       createdAt: group.createdAt,
     },
     activeUsers: 1,
@@ -141,9 +135,9 @@ export const createGroup = asyncHandelr(async (req, res, next) => {
 
 export const getUserGroups = asyncHandelr(async (req, res, next) => {
   const userId = req.user._id;
-  const allGroups = await GroupModel.find({ isActive: true }).select(
-    "-messages"
-  );
+  const allGroups = await GroupModel.find({ isActive: true })
+    .select("-messages")
+    .populate("imageId");
   const sortedGroups = allGroups.sort((a, b) => {
     const aIsAdmin = a.admin.toString() === userId.toString();
     const bIsAdmin = b.admin.toString() === userId.toString();
@@ -253,7 +247,7 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
                   avatar: msg.sender.avatar,
                 }
               : null,
-            type: "deleted",           // or keep original type if you prefer
+            type: "deleted", // or keep original type if you prefer
             content: null,
             image: null,
             voice: null,
@@ -261,7 +255,7 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
             deletedAt: msg.deletedAt || msg.updatedAt,
             createdAt: msg.createdAt,
             updatedAt: msg.updatedAt,
-            replyTo: null,              // no reply shown for deleted messages
+            replyTo: null, // no reply shown for deleted messages
           };
         }
 
