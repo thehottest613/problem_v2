@@ -29,6 +29,8 @@ export const handleJoinGroup = async (io, socket, data) => {
       return;
     }
 
+    console.log(`//////////////////////${socket.id}`)
+
     const group = await GroupModel.findById(groupId);
     if (!group) {
       socket.emit("join-group-error", {

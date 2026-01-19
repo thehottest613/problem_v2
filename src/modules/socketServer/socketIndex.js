@@ -23,7 +23,9 @@ export const initializeSocket = (server) => {
   });
   io.use(authMiddleware);
   io.on("connection", (socket) => {
-    console.log(`User connected: ${socket.user.username||"null"} (${socket.id})`);
+    console.log(
+      `User connected: ${socket.user.username || "null"} (${socket.id})`
+    );
     setupConnectionEvents(io, socket);
     setupGroupEvents(io, socket);
     setupMessageEvents(io, socket);
@@ -52,8 +54,8 @@ export const markGroupForDeletion = (groupId) => {
   });
 };
 export const trackUserActivity = (
-  socketId,           
-  userId,            
+  socketId,
+  userId,
   groupId,
   userRole,
   flag = true
@@ -66,6 +68,9 @@ export const trackUserActivity = (
 
   const groups = userGroupActivity.get(userIdStr);
 
+  groups.forEach((activity) => {
+    activity.flag = false;
+  });
 
   if (groups.has(groupId)) {
     const activity = groups.get(groupId);
@@ -88,7 +93,7 @@ export const trackUserActivity = (
 
 export const updateFlag = (userId) => {
   const userIdStr = userId.toString();
-  
+
   if (!userGroupActivity.has(userIdStr)) {
     return;
   }
@@ -124,10 +129,9 @@ export const updateUserLastMessage = (userId, groupId) => {
   const now = new Date();
   activity.lastMessageSent = now;
   activity.lastActive = now;
-  // Optional: update socketId if you want
 };
 export const removeUserActivity = (userId, groupId) => {
-  const userIdStr = String(userId);    // safe conversion (ObjectId, string, etc.)
+  const userIdStr = String(userId);
   const groupIdStr = String(groupId);
 
   const userGroups = userGroupActivity.get(userIdStr);
@@ -137,7 +141,6 @@ export const removeUserActivity = (userId, groupId) => {
 
   userGroups.delete(groupIdStr);
 
-  // Clean up the user entry if they have no more active groups
   if (userGroups.size === 0) {
     userGroupActivity.delete(userIdStr);
   }
