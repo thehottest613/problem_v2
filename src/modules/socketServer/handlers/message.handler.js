@@ -12,7 +12,7 @@ export const handleSendGroupMessage = async (io, socket, data) => {
       });
       return;
     }
-    const { groupId, content, image, voice, type = "text" , replyTo} = data;
+    const { groupId, content, image, voice, type = "text", replyTo } = data;
 
     console.log(
       `User ${socket.user.username} sending message to group ${groupId}`
@@ -69,9 +69,11 @@ export const handleSendGroupMessage = async (io, socket, data) => {
       return;
     }
 
-    let replyToMessage = null;
+    let replyToObject = undefined;
+
     if (replyTo) {
-      replyToMessage = group.messages.id(replyTo);
+      const replyToMessage = group.messages.id(replyTo);
+
       if (!replyToMessage) {
         socket.emit("message-error", {
           success: false,
@@ -79,20 +81,34 @@ export const handleSendGroupMessage = async (io, socket, data) => {
         });
         return;
       }
+
+      replyToObject = {
+        _id: replyToMessage._id,
+        sender: replyToMessage.sender,
+        content: replyToMessage.content
+          ? replyToMessage.content.substring(0, 100)
+          : null,
+        type: replyToMessage.type,
+        image: replyToMessage.image,
+        voice: replyToMessage.voice,
+        createdAt: replyToMessage.createdAt,
+      };
     }
 
+    // ===============================
+    // ✅ SAVE MESSAGE WITH OBJECT
+    // ===============================
     const message = {
       sender: socket.user._id,
       content,
       image,
       voice,
       type,
-      replyTo: replyTo || undefined,
+      replyTo: replyToObject,
     };
 
     group.messages.push(message);
     await group.save();
-
 
     const savedMessage = group.messages[group.messages.length - 1];
 
@@ -111,14 +127,6 @@ export const handleSendGroupMessage = async (io, socket, data) => {
         username: socket.user.username,
         email: socket.user.email,
       },
-      replyTo: replyToMessage
-        ? {
-            _id: replyToMessage._id,
-            sender: replyToMessage.sender,
-            content: replyToMessage.content?.substring(0, 100) || null,
-            type: replyToMessage.type,
-          }
-        : undefined,
     };
 
     updateUserLastMessage(socket.user._id, group._id);
@@ -179,7 +187,6 @@ export const handleSendGroupMessage = async (io, socket, data) => {
   }
 };
 
-
 export const handleDeleteGroupMessage = async (io, socket, data) => {
   try {
     const { groupId, messageId } = data;
@@ -230,7 +237,7 @@ export const handleDeleteGroupMessage = async (io, socket, data) => {
 
     // Soft delete (recommended for chat apps)
     message.isDeleted = true;
-    message.content = null;           // optional: clear content
+    message.content = null; // optional: clear content
     message.image = undefined;
     message.voice = undefined;
 
@@ -250,7 +257,9 @@ export const handleDeleteGroupMessage = async (io, socket, data) => {
     const lastMessage = group.messages[group.messages.length - 1];
     if (lastMessage && lastMessage._id.toString() === messageId) {
       // Re-calculate last message preview (simple fallback)
-      const fallbackContent = lastMessage.isDeleted ? "[Deleted message]" : "Message deleted";
+      const fallbackContent = lastMessage.isDeleted
+        ? "[Deleted message]"
+        : "Message deleted";
 
       const allMembers = new Set();
       group.activeUsers.forEach((u) => allMembers.add(u.user.toString()));
@@ -275,7 +284,9 @@ export const handleDeleteGroupMessage = async (io, socket, data) => {
       });
     }
 
-    console.log(`Message ${messageId} deleted in group ${groupId} by ${socket.user.username}`);
+    console.log(
+      `Message ${messageId} deleted in group ${groupId} by ${socket.user.username}`
+    );
   } catch (error) {
     console.error("Error deleting message:", error);
     socket.emit("delete-message-error", {

@@ -81,6 +81,12 @@ export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
   );
 
   const io = getIO();
+  io.emit("group-counters-updated", {
+    groupId: group._id,
+    activeUsers: groupCounters.get(groupId)?.active || 0,
+    guests: groupCounters.get(groupId)?.guests || 0,
+    indatabase: groupCounters.get(groupId)?.indatabase || 0,
+  });
 
   io.to(`group-${groupId}`).emit("user-left-group", {
     userId: userId.toString(),
@@ -276,12 +282,17 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
           voice: msg.voice,
           createdAt: msg.createdAt,
           updatedAt: msg.updatedAt,
-          replyTo: msg.replyTo
-            ? {
-                _id: msg.replyTo.toString(),
-                // You can expand later if you populate replyTo
-              }
-            : null,
+          replyTo:
+            msg.replyTo && msg.replyTo._id
+              ? {
+                  _id: msg.replyTo._id,
+                  content: msg.replyTo.content ?? null,
+                  type: msg.replyTo.type ?? null,
+                  image: msg.replyTo.image?.url ? msg.replyTo.image : null,
+                  voice: msg.replyTo.voice?.url ? msg.replyTo.voice : null,
+                  createdAt: msg.replyTo.createdAt,
+                }
+              : null,
         };
       }),
     },

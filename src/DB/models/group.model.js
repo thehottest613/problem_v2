@@ -34,8 +34,23 @@ const messageSchema = new mongoose.Schema(
       public_id: String,
     },
     replyTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Message", // self-reference if needed
+      _id: mongoose.Schema.Types.ObjectId,
+      content: String,
+      type: {
+        type: String,
+        enum: ["text", "image", "voice"],
+      },
+      sender: {
+        _id: mongoose.Schema.Types.ObjectId,
+        username: String,
+      },
+      image: {
+        url: String,
+      },
+      voice: {
+        duration: Number,
+      },
+      createdAt: Date,
     },
     type: {
       type: String,
@@ -76,9 +91,9 @@ const groupSchema = new mongoose.Schema(
         },
       },
     ],
-    imageId:{
+    imageId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "CartoonImage"
+      ref: "CartoonImage",
     },
     messages: [messageSchema],
     maxActiveUsers: {
