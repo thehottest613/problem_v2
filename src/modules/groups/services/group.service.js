@@ -239,23 +239,56 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
       limit,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
-      messages: paginatedMessages.map((msg) => ({
-        _id: msg._id,
-        sender: msg.sender
-          ? {
-              _id: msg.sender._id,
-              username: msg.sender.username,
-              email: msg.sender.email,
-              avatar: msg.sender.avatar,
-            }
-          : null,
-        content: msg.content,
-        type: msg.type,
-        image: msg.image,
-        voice: msg.voice,
-        createdAt: msg.createdAt,
-        updatedAt: msg.updatedAt,
-      })),
+      messages: paginatedMessages.map((msg) => {
+        // Handle deleted messages
+        if (msg.isDeleted) {
+          return {
+            _id: msg._id,
+            sender: msg.sender
+              ? {
+                  _id: msg.sender._id,
+                  username: msg.sender.username,
+                  email: msg.sender.email,
+                  avatar: msg.sender.avatar,
+                }
+              : null,
+            type: "deleted",           // or keep original type if you prefer
+            content: null,
+            image: null,
+            voice: null,
+            isDeleted: true,
+            deletedAt: msg.deletedAt || msg.updatedAt,
+            createdAt: msg.createdAt,
+            updatedAt: msg.updatedAt,
+            replyTo: null,              // no reply shown for deleted messages
+          };
+        }
+
+        // Normal message
+        return {
+          _id: msg._id,
+          sender: msg.sender
+            ? {
+                _id: msg.sender._id,
+                username: msg.sender.username,
+                email: msg.sender.email,
+                avatar: msg.sender.avatar,
+              }
+            : null,
+          content: msg.content,
+          type: msg.type,
+          image: msg.image,
+          voice: msg.voice,
+          createdAt: msg.createdAt,
+          updatedAt: msg.updatedAt,
+          replyTo: msg.replyTo
+            ? {
+                _id: msg.replyTo.toString(),
+                // You can expand later if you populate replyTo
+              }
+            : null,
+        };
+      }),
     },
   });
 });

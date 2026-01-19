@@ -178,3 +178,110 @@ export const handleSendGroupMessage = async (io, socket, data) => {
     });
   }
 };
+
+
+export const handleDeleteGroupMessage = async (io, socket, data) => {
+  try {
+    const { groupId, messageId } = data;
+
+    if (!groupId || !messageId) {
+      socket.emit("delete-message-error", {
+        success: false,
+        message: "Group ID and Message ID are required",
+      });
+      return;
+    }
+
+    console.log(
+      `User ${socket.user.username} attempting to delete message ${messageId} in group ${groupId}`
+    );
+
+    const group = await GroupModel.findById(groupId);
+    if (!group) {
+      socket.emit("delete-message-error", {
+        success: false,
+        message: "Group not found",
+      });
+      return;
+    }
+
+    // Check permissions: only sender or admin can delete
+    const userRole = group.getUserRole(socket.user._id);
+    const message = group.messages.id(messageId);
+
+    if (!message) {
+      socket.emit("delete-message-error", {
+        success: false,
+        message: "Message not found",
+      });
+      return;
+    }
+
+    const isSender = message.sender.toString() === socket.user._id.toString();
+    const isAdmin = userRole === "admin";
+
+    if (!isSender && !isAdmin) {
+      socket.emit("delete-message-error", {
+        success: false,
+        message: "You can only delete your own messages or you must be admin",
+      });
+      return;
+    }
+
+    // Soft delete (recommended for chat apps)
+    message.isDeleted = true;
+    message.content = null;           // optional: clear content
+    message.image = undefined;
+    message.voice = undefined;
+
+    await group.save();
+
+    // Notify everyone in the group room
+    io.to(`group-${groupId}`).emit("message-deleted", {
+      success: true,
+      groupId,
+      messageId,
+      deletedBy: socket.user._id,
+      deletedByUsername: socket.user.username,
+      timestamp: new Date(),
+    });
+
+    // Optional: update last message preview for all members (if this was the last message)
+    const lastMessage = group.messages[group.messages.length - 1];
+    if (lastMessage && lastMessage._id.toString() === messageId) {
+      // Re-calculate last message preview (simple fallback)
+      const fallbackContent = lastMessage.isDeleted ? "[Deleted message]" : "Message deleted";
+
+      const allMembers = new Set();
+      group.activeUsers.forEach((u) => allMembers.add(u.user.toString()));
+      allMembers.add(group.admin.toString());
+
+      allMembers.forEach((memberId) => {
+        io.to(`user-groups-${memberId}`).emit("group-updated", {
+          success: true,
+          group: {
+            _id: group._id,
+            name: group.name,
+            lastMessage: {
+              content: fallbackContent,
+              type: "system",
+              senderId: socket.user._id,
+              senderName: "System",
+              timestamp: new Date(),
+            },
+            updatedAt: new Date(),
+          },
+        });
+      });
+    }
+
+    console.log(`Message ${messageId} deleted in group ${groupId} by ${socket.user.username}`);
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    socket.emit("delete-message-error", {
+      success: false,
+      message: "Failed to delete message",
+      error: error.message,
+    });
+  }
+};

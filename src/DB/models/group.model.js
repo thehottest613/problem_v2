@@ -2,6 +2,17 @@ import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema(
   {
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
