@@ -29,7 +29,6 @@ export const handleJoinGroup = async (io, socket, data) => {
       return;
     }
 
-
     const group = await GroupModel.findById(groupId);
     if (!group) {
       socket.emit("join-group-error", {
@@ -38,7 +37,6 @@ export const handleJoinGroup = async (io, socket, data) => {
       });
       return;
     }
-
 
     socket.join(`group-${groupId}`);
 
@@ -50,7 +48,7 @@ export const handleJoinGroup = async (io, socket, data) => {
 
     ////////////////
     await updateGroupCounters(groupId, userRole, "join", null);
-    console.log("update counter for user "+socket.user._id)
+    console.log("update counter for user " + socket.user._id);
     io.emit("group-counters-updated", {
       groupId: group._id,
       activeUsers: groupCounters.get(groupId).active || 0,

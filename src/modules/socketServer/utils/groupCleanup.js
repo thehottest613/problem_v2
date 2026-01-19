@@ -2,7 +2,7 @@ import { GroupModel } from "../../../DB/models/group.model.js";
 import { groupLastActivity, userGroupActivity } from "../socketIndex.js";
 import { groupCounters } from "../socketIndex.js";
 import { updateGroupCounters } from "../utils/socket.helper.js";
-import { removeUserActivity , markGroupForDeletion} from "../socketIndex.js"; // FIX: Added import for removeUserActivity
+import { removeUserActivity, markGroupForDeletion } from "../socketIndex.js"; // FIX: Added import for removeUserActivity
 
 let cleanupIo = null;
 
@@ -30,7 +30,6 @@ const deleteInactiveGroups = async () => {
           continue;
         }
 
-
         await GroupModel.findByIdAndDelete(groupId);
         console.log(`Cleanup: Deleted inactive group: ${groupId}`);
 
@@ -39,7 +38,6 @@ const deleteInactiveGroups = async () => {
           groupId,
           message: "Group has been deleted due to inactivity",
         });
-
 
         groupLastActivity.delete(groupId);
       } catch (error) {
@@ -59,7 +57,7 @@ const kickInactiveUsers = async () => {
 
   try {
     const now = new Date();
-    const THIRTY_MINUTES = 20 * 60 * 1000; 
+    const THIRTY_MINUTES = 20 * 60 * 1000;
     const usersToKick = [];
 
     // Step 1: Collect candidates and clean guests/admins
@@ -103,7 +101,9 @@ const kickInactiveUsers = async () => {
 
           if (timeSinceLastMessage >= THIRTY_MINUTES) {
             const lastSocketId = activity.lastSocketId;
-            const socket = lastSocketId ? cleanupIo.sockets.sockets.get(lastSocketId) : null;
+            const socket = lastSocketId
+              ? cleanupIo.sockets.sockets.get(lastSocketId)
+              : null;
             const isOnline = !!socket && socket.connected;
 
             usersToKick.push({
@@ -111,6 +111,8 @@ const kickInactiveUsers = async () => {
               groupId,
               isOnline,
               socket: socket,
+              flag: activity.flag,
+              onlineFlag: activity.onlineFlag,
             });
           }
         }
@@ -135,20 +137,22 @@ const kickInactiveUsers = async () => {
           `Cleanup: Removed inactive active user ${user.userId} from group ${user.groupId}`
         );
 
-        await updateGroupCounters(user.groupId, userRole, "leave", null);
+        if (user.flag === true && user.onlineFlag === true) {
+          await updateGroupCounters(user.groupId, "active", "leave", null);
+          await updateGroupCounters(user.groupId, "guest", "join", null);
+        }
         await updateGroupCounters(
-          user.groupId,
-          userRole,
-          "indatabase",
-          group.activeUsers.length
-        );
-
-        cleanupIo.emit("group-counters-updated", {
-          groupId: group._id,
-          activeUsers: groupCounters.get(user.groupId)?.active || 0,
-          guests: groupCounters.get(user.groupId)?.guests || 0,
-          indatabase: groupCounters.get(user.groupId)?.indatabase || 0,
-        });
+            user.groupId,
+            userRole,
+            "indatabase",
+            group.activeUsers.length
+          );
+          cleanupIo.emit("group-counters-updated", {
+            groupId: group._id,
+            activeUsers: groupCounters.get(user.groupId)?.active || 0,
+            guests: groupCounters.get(user.groupId)?.guests || 0,
+            indatabase: groupCounters.get(user.groupId)?.indatabase || 0,
+          });
 
         // Notify
         const eventPayload = {
@@ -196,7 +200,9 @@ const kickInactiveUsers = async () => {
         removeUserActivity(user.userId, user.groupId);
 
         // Step 3: Check if group is now empty
-        const room = cleanupIo.sockets.adapter.rooms.get(`group-${user.groupId}`);
+        const room = cleanupIo.sockets.adapter.rooms.get(
+          `group-${user.groupId}`
+        );
         if (!room || room.size === 0) {
           markGroupForDeletion(user.groupId);
           console.log(

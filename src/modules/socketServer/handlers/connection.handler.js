@@ -3,6 +3,7 @@ import {
   userGroupActivity,
   getIO,
   markGroupForDeletion,
+  updateOnlineFlag
 } from "../socketIndex.js";
 
 import { groupCounters } from "../socketIndex.js";
@@ -45,7 +46,6 @@ const checkAndUpdateGroupActivity = async (socket, io, userId) => {
     let lastGroupId = null;
     let lastActivity = null;
 
-    // Find the last active group (flag === true)
     for (const [groupId, activity] of groups.entries()) {
       if (activity.flag === true) {
         lastGroupId = groupId;
@@ -81,6 +81,8 @@ const checkAndUpdateGroupActivity = async (socket, io, userId) => {
       guests: groupCounters.get(lastGroupId)?.guests || 0,
       indatabase: groupCounters.get(lastGroupId)?.indatabase || 0,
     });
+
+    updateOnlineFlag(userIdStr , lastGroupId)
 
     const room = io.sockets.adapter.rooms.get(`group-${lastGroupId}`);
     if (!room || room.size === 0) {

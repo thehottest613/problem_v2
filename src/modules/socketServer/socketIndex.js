@@ -78,6 +78,7 @@ export const trackUserActivity = (
     activity.lastActive = new Date();
     activity.flag = flag;
     activity.lastSocketId = socketId;
+    activity.onlineFlag = true
   } else {
     groups.set(groupId, {
       userId: userIdStr,
@@ -86,6 +87,7 @@ export const trackUserActivity = (
       lastActive: new Date(),
       lastMessageSent: new Date(), // fresh on join
       flag,
+      onlineFlag: true,
       lastSocketId: socketId, // optional
     });
   }
@@ -103,6 +105,22 @@ export const updateFlag = (userId) => {
   for (const activity of groups.values()) {
     activity.flag = false;
   }
+};
+
+export const updateOnlineFlag = (userId , groupId) => {
+  const userIdStr = userId.toString();
+  const groupIdStr = groupId.toString();
+
+  if (!userGroupActivity.has(userIdStr)) {
+    return;
+  }
+
+  const groups = userGroupActivity.get(userIdStr);
+
+  const activity = groups.get(groupIdStr);
+  if (!activity) return;
+
+  activity.onlineFlag = false
 };
 export const updateUserLastActive = (userId, groupId) => {
   const userIdStr = userId.toString();
