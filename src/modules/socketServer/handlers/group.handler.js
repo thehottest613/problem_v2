@@ -49,6 +49,7 @@ export const handleJoinGroup = async (io, socket, data) => {
 
     ////////////////
     await updateGroupCounters(groupId, userRole, "join", null);
+    console.log("update counter for user "+user._id)
     io.emit("group-counters-updated", {
       groupId: group._id,
       activeUsers: groupCounters.get(groupId).active || 0,
