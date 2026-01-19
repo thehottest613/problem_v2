@@ -76,19 +76,16 @@ const kickInactiveUsers = async () => {
         const userRole = group.getUserRole(activity.userId);
 
         if (userRole === "guest") {
-          // Guests: never kick, but clean old (flag=false) activities
           if (activity.flag === false) {
             console.log(
               `Cleanup: Removing stale guest activity for user ${activity.userId} in group ${groupId}`
             );
             removeUserActivity(userIdStr, groupId);
           }
-          // Keep flag=true even if old lastMessageSent
           continue;
         }
 
         if (userRole === "admin") {
-          // Admins: never kick, reset timer if flag=true
           if (activity.flag === true) {
             activity.lastMessageSent = new Date();
             activity.lastActive = new Date();
@@ -105,9 +102,6 @@ const kickInactiveUsers = async () => {
           const timeSinceLastMessage = now - new Date(activity.lastMessageSent);
 
           if (timeSinceLastMessage >= THIRTY_MINUTES) {
-            // We need to know if user is currently online (for notification style)
-            // Since we no longer iterate by socketId, we use lastSocketId as hint
-            // Note: this is not 100% accurate, but good enough for notification
             const lastSocketId = activity.lastSocketId;
             const socket = lastSocketId ? cleanupIo.sockets.sockets.get(lastSocketId) : null;
             const isOnline = !!socket && socket.connected;
@@ -116,14 +110,13 @@ const kickInactiveUsers = async () => {
               userId: userIdStr,
               groupId,
               isOnline,
-              socket: socket, // keep reference for direct emit/leave if online
+              socket: socket,
             });
           }
         }
       }
     }
 
-    // Step 2: Process kicks
     for (const user of usersToKick) {
       try {
         const group = await GroupModel.findById(user.groupId);

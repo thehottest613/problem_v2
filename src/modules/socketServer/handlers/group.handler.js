@@ -14,40 +14,21 @@ import { checkUserName } from "../utils/checkUsername.js";
 export const handleJoinGroup = async (io, socket, data) => {
   try {
     const { groupId } = data;
+
+    console.log(
+      `User ${socket.user.username} attempting to join group ${groupId}`
+    );
+
     const roomName = `group-${groupId}`;
 
-    // Quick deduplication key
-    const dedupeKey = `join:${groupId}`;
-
-    // If this socket is already processing this join
-    if (socket.data?.processing?.[dedupeKey]) {
-      console.log(
-        `[DUPLICATE JOIN BLOCKED] socket ${socket.id} group ${groupId}`
-      );
-      socket.emit("group-joined", {
-        success: true,
-        groupId,
-        message: "Join already in progress",
-      });
-      return;
-    }
-
-    // Mark as processing
-    socket.data = socket.data || {};
-    socket.data.processing = socket.data.processing || {};
-    socket.data.processing[dedupeKey] = true;
-
-    // Your original check (keep it, but it's not enough alone)
     if (socket.rooms.has(roomName)) {
       socket.emit("join-group-error", {
         success: false,
         message: "you are already joined",
       });
-      delete socket.data.processing[dedupeKey]; // cleanup
       return;
     }
 
-    console.log(`//////////////////////${socket.id}`);
 
     const group = await GroupModel.findById(groupId);
     if (!group) {
@@ -57,6 +38,7 @@ export const handleJoinGroup = async (io, socket, data) => {
       });
       return;
     }
+
 
     socket.join(`group-${groupId}`);
 
@@ -68,7 +50,7 @@ export const handleJoinGroup = async (io, socket, data) => {
 
     ////////////////
     await updateGroupCounters(groupId, userRole, "join", null);
-    console.log("update counter for user " + socket.user._id);
+    console.log("update counter for user "+socket.user._id)
     io.emit("group-counters-updated", {
       groupId: group._id,
       activeUsers: groupCounters.get(groupId).active || 0,

@@ -105,14 +105,14 @@ export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
 export const createGroup = asyncHandelr(async (req, res, next) => {
   if (!checkUserName(req.user)) throw new Error("user expired");
   const userId = req.user._id;
-  const { name, description, avatar } = req.body;
+  const { name, description, imageId } = req.body;
 
   const group = await GroupModel.create({
     name,
     description,
     admin: userId,
     activeUsers: [{ user: userId }],
-    avatar,
+    imageId,
   });
 
   const io = getIO();
@@ -124,6 +124,7 @@ export const createGroup = asyncHandelr(async (req, res, next) => {
       description: group.description,
       admin: group.admin,
       activeUsersCount: group.activeUsers.length,
+      imageId:group.imageId || undefined,
       createdAt: group.createdAt,
     },
     activeUsers: 1,

@@ -76,6 +76,10 @@ const groupSchema = new mongoose.Schema(
         },
       },
     ],
+    imageId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CartoonImage"
+    },
     messages: [messageSchema],
     maxActiveUsers: {
       type: Number,
@@ -86,10 +90,6 @@ const groupSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-    },
-    avatar: {
-      url: String,
-      public_id: String,
     },
   },
   {
