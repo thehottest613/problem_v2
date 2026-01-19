@@ -118,7 +118,7 @@ export const handleLeaveGroup = async (io, socket, data) => {
     });
 
     const userRole = group.getUserRole(socket.user._id);
-    updateFlag(socket.id);
+    updateFlag(socket.user._id);
     ////////////////
     await updateGroupCounters(groupId, userRole, "leave", null);
     io.emit("group-counters-updated", {
@@ -155,7 +155,7 @@ export const handleTyping = (io, socket, data) => {
   try {
     const { groupId, isTyping } = data;
 
-    updateUserLastActive(socket.id, groupId);
+    updateUserLastActive(socket.user._id, groupId);
 
     socket.to(`group-${groupId}`).emit("user-typing", {
       userId: socket.user._id,

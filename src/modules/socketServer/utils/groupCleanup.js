@@ -59,19 +59,17 @@ const kickInactiveUsers = async () => {
 
   try {
     const now = new Date();
-    const THIRTY_MINUTES = 20 * 60 * 1000;
+    const THIRTY_MINUTES = 20 * 60 * 1000; 
     const usersToKick = [];
 
     // Step 1: Collect candidates and clean guests/admins
-    for (const [socketId, groupSessions] of userGroupActivity.entries()) {
-      const socket = cleanupIo.sockets.sockets.get(socketId);
-      const isOnline = !!socket;
-
+    for (const [userIdStr, groupSessions] of userGroupActivity.entries()) {
       for (const [groupId, activity] of [...groupSessions.entries()]) {
-        // copy to avoid mutation issues
+        // copy to avoid mutation issues during iteration
+
         const group = await GroupModel.findById(groupId);
         if (!group) {
-          removeUserActivity(socketId, groupId);
+          removeUserActivity(userIdStr, groupId);
           continue;
         }
 
@@ -83,14 +81,14 @@ const kickInactiveUsers = async () => {
             console.log(
               `Cleanup: Removing stale guest activity for user ${activity.userId} in group ${groupId}`
             );
-            removeUserActivity(socketId, groupId);
+            removeUserActivity(userIdStr, groupId);
           }
           // Keep flag=true even if old lastMessageSent
           continue;
         }
 
         if (userRole === "admin") {
-          // Admins: never kick, reset timer, keep flag=true activity
+          // Admins: never kick, reset timer if flag=true
           if (activity.flag === true) {
             activity.lastMessageSent = new Date();
             activity.lastActive = new Date();
@@ -98,7 +96,7 @@ const kickInactiveUsers = async () => {
               `Admin ${activity.userId} activity refreshed in group ${groupId}`
             );
           } else {
-            removeUserActivity(socketId, groupId);
+            removeUserActivity(userIdStr, groupId);
           }
           continue;
         }
@@ -107,33 +105,36 @@ const kickInactiveUsers = async () => {
           const timeSinceLastMessage = now - new Date(activity.lastMessageSent);
 
           if (timeSinceLastMessage >= THIRTY_MINUTES) {
-            // Only collect active users who are inactive
+            // We need to know if user is currently online (for notification style)
+            // Since we no longer iterate by socketId, we use lastSocketId as hint
+            // Note: this is not 100% accurate, but good enough for notification
+            const lastSocketId = activity.lastSocketId;
+            const socket = lastSocketId ? cleanupIo.sockets.sockets.get(lastSocketId) : null;
+            const isOnline = !!socket && socket.connected;
+
             usersToKick.push({
-              socketId,
+              userId: userIdStr,
               groupId,
-              userId: activity.userId,
               isOnline,
+              socket: socket, // keep reference for direct emit/leave if online
             });
           }
-          // We don't remove here — only after successful kick
         }
       }
     }
 
-    // Step 2: Kick inactive active users
+    // Step 2: Process kicks
     for (const user of usersToKick) {
       try {
         const group = await GroupModel.findById(user.groupId);
         if (!group) {
-          removeUserActivity(user.socketId, user.groupId);
+          removeUserActivity(user.userId, user.groupId);
           continue;
         }
 
-        // Double-check role (in case changed)
         const userRole = group.getUserRole(user.userId);
         if (userRole !== "active") continue;
 
-        // Remove from active users in DB
         await group.removeUser(user.userId);
         await group.save();
 
@@ -141,7 +142,6 @@ const kickInactiveUsers = async () => {
           `Cleanup: Removed inactive active user ${user.userId} from group ${user.groupId}`
         );
 
-        // Update counters
         await updateGroupCounters(user.groupId, userRole, "leave", null);
         await updateGroupCounters(
           user.groupId,
@@ -149,6 +149,7 @@ const kickInactiveUsers = async () => {
           "indatabase",
           group.activeUsers.length
         );
+
         cleanupIo.emit("group-counters-updated", {
           groupId: group._id,
           activeUsers: groupCounters.get(user.groupId)?.active || 0,
@@ -166,30 +167,28 @@ const kickInactiveUsers = async () => {
           activeUsersCount: group.activeUsers.length,
         };
 
-        if (user.isOnline) {
-          const socket = cleanupIo.sockets.sockets.get(user.socketId);
-          if (socket) {
-            socket.emit("user-kicked", {
-              success: false,
-              groupId: user.groupId,
-              message: "you have been kicked as a active user",
-              reason: "inactivity",
-              removedFromActiveUsers: true,
-            });
+        if (user.isOnline && user.socket) {
+          // Online user - direct emit
+          user.socket.emit("user-kicked", {
+            success: false,
+            groupId: user.groupId,
+            message: "you have been kicked as a active user",
+            reason: "inactivity",
+            removedFromActiveUsers: true,
+          });
 
-            socket.leave(`group-${user.groupId}`);
+          user.socket.leave(`group-${user.groupId}`);
 
-            socket.to(`group-${user.groupId}`).emit("user-removed", {
-              ...eventPayload,
-              username: socket.user?.username || "Unknown",
-            });
+          user.socket.to(`group-${user.groupId}`).emit("user-removed", {
+            ...eventPayload,
+            username: user.socket.user?.username || "Unknown",
+          });
 
-            console.log(
-              `Kicked online inactive user ${user.userId} from ${user.groupId}`
-            );
-          }
+          console.log(
+            `Kicked online inactive user ${user.userId} from ${user.groupId}`
+          );
         } else {
-          // Offline user
+          // Offline user - broadcast to room
           cleanupIo.to(`group-${user.groupId}`).emit("user-removed", {
             ...eventPayload,
             username: "Offline User",
@@ -200,13 +199,11 @@ const kickInactiveUsers = async () => {
           );
         }
 
-        // Remove this specific group activity
-        removeUserActivity(user.socketId, user.groupId);
+        // Clean up activity (now using userId)
+        removeUserActivity(user.userId, user.groupId);
 
         // Step 3: Check if group is now empty
-        const room = cleanupIo.sockets.adapter.rooms.get(
-          `group-${user.groupId}`
-        );
+        const room = cleanupIo.sockets.adapter.rooms.get(`group-${user.groupId}`);
         if (!room || room.size === 0) {
           markGroupForDeletion(user.groupId);
           console.log(

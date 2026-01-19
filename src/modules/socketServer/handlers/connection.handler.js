@@ -35,15 +35,18 @@ export const handleDisconnection = async (socket, reason) => {
 
 const checkAndUpdateGroupActivity = async (socket, io, userId) => {
   try {
-    const sessions = userGroupActivity.get(socket.id);
-    if (!sessions || sessions.size === 0) {
+    const userIdStr = userId.toString();
+
+    const groups = userGroupActivity.get(userIdStr);
+    if (!groups || groups.size === 0) {
       return;
     }
 
     let lastGroupId = null;
     let lastActivity = null;
 
-    for (const [groupId, activity] of sessions.entries()) {
+    // Find the last active group (flag === true)
+    for (const [groupId, activity] of groups.entries()) {
       if (activity.flag === true) {
         lastGroupId = groupId;
         lastActivity = activity;
@@ -52,7 +55,9 @@ const checkAndUpdateGroupActivity = async (socket, io, userId) => {
     }
 
     if (!lastGroupId) {
-      console.log(`No last group found for disconnecting socket ${socket.id}`);
+      console.log(
+        `No last active group found for disconnecting user ${userId}`
+      );
       return;
     }
 
@@ -68,7 +73,7 @@ const checkAndUpdateGroupActivity = async (socket, io, userId) => {
 
     const userRole = group.getUserRole(userId);
 
-    await updateGroupCounters(lastGroupId, userRole, "leave" , null);
+    await updateGroupCounters(lastGroupId, userRole, "leave", null);
 
     io.emit("group-counters-updated", {
       groupId: lastGroupId,

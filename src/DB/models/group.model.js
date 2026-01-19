@@ -22,6 +22,10 @@ const messageSchema = new mongoose.Schema(
       duration: Number,
       public_id: String,
     },
+    replyTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message", // self-reference if needed
+    },
     type: {
       type: String,
       enum: ["text", "image", "voice"],

@@ -12,7 +12,7 @@ export const handleSendGroupMessage = async (io, socket, data) => {
       });
       return;
     }
-    const { groupId, content, image, voice, type = "text" } = data;
+    const { groupId, content, image, voice, type = "text" , replyTo} = data;
 
     console.log(
       `User ${socket.user.username} sending message to group ${groupId}`
@@ -69,12 +69,25 @@ export const handleSendGroupMessage = async (io, socket, data) => {
       return;
     }
 
+    let replyToMessage = null;
+    if (replyTo) {
+      replyToMessage = group.messages.id(replyTo);
+      if (!replyToMessage) {
+        socket.emit("message-error", {
+          success: false,
+          message: "Reply target message not found",
+        });
+        return;
+      }
+    }
+
     const message = {
       sender: socket.user._id,
       content,
       image,
       voice,
       type,
+      replyTo: replyTo || undefined,
     };
 
     group.messages.push(message);
@@ -82,7 +95,7 @@ export const handleSendGroupMessage = async (io, socket, data) => {
 
 
     const savedMessage = group.messages[group.messages.length - 1];
-    
+
     await sendGroupMessageNotifications(
       group,
       savedMessage,
@@ -98,9 +111,17 @@ export const handleSendGroupMessage = async (io, socket, data) => {
         username: socket.user.username,
         email: socket.user.email,
       },
+      replyTo: replyToMessage
+        ? {
+            _id: replyToMessage._id,
+            sender: replyToMessage.sender,
+            content: replyToMessage.content?.substring(0, 100) || null,
+            type: replyToMessage.type,
+          }
+        : undefined,
     };
 
-    updateUserLastMessage(socket.id, group._id);
+    updateUserLastMessage(socket.user._id, group._id);
 
     const populatedUser = await socket.user.populate("ImageId");
 
@@ -137,6 +158,7 @@ export const handleSendGroupMessage = async (io, socket, data) => {
           senderId: socket.user._id,
           senderName: socket.user.username,
           timestamp: savedMessage.createdAt,
+          replyTo: replyTo ? replyTo.toString() : undefined,
         },
         updatedAt: new Date(),
       };

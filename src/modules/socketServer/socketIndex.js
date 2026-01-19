@@ -52,70 +52,93 @@ export const markGroupForDeletion = (groupId) => {
   });
 };
 export const trackUserActivity = (
-  socketId,
-  userId,
+  socketId,           
+  userId,            
   groupId,
   userRole,
   flag = true
 ) => {
-  if (!userGroupActivity.has(socketId)) {
-    userGroupActivity.set(socketId, new Map());
+  const userIdStr = userId.toString();
+
+  if (!userGroupActivity.has(userIdStr)) {
+    userGroupActivity.set(userIdStr, new Map());
   }
 
-  const userSessions = userGroupActivity.get(socketId);
+  const groups = userGroupActivity.get(userIdStr);
 
-  for (const [existingGroupId, activity] of userSessions.entries()) {
-    activity.flag = existingGroupId === groupId;
-  }
 
-  if (userSessions.has(groupId)) {
-    const activity = userSessions.get(groupId);
-
-    activity.flag = true;
+  if (groups.has(groupId)) {
+    const activity = groups.get(groupId);
     activity.userRole = userRole;
     activity.lastActive = new Date();
+    activity.flag = flag;
+    activity.lastSocketId = socketId;
+  } else {
+    groups.set(groupId, {
+      userId: userIdStr,
+      groupId,
+      userRole,
+      lastActive: new Date(),
+      lastMessageSent: new Date(), // fresh on join
+      flag,
+      lastSocketId: socketId, // optional
+    });
+  }
+};
+
+export const updateFlag = (userId) => {
+  const userIdStr = userId.toString();
+  
+  if (!userGroupActivity.has(userIdStr)) {
     return;
   }
 
-  userSessions.set(groupId, {
-    userId,
-    groupId,
-    userRole,
-    lastActive: new Date(),
-    lastMessageSent: new Date(),
-    flag: true,
-  });
-};
+  const groups = userGroupActivity.get(userIdStr);
 
-export const updateFlag = (socketId) => {
-  if (!userGroupActivity.has(socketId)) return;
-
-  const userSessions = userGroupActivity.get(socketId);
-
-  for (const activity of userSessions.values()) {
+  for (const activity of groups.values()) {
     activity.flag = false;
   }
 };
-export const updateUserLastActive = (socketId, groupId) => {
-  const sessions = userGroupActivity.get(socketId);
-  if (!sessions) return;
-  const activity = sessions.get(groupId);
+export const updateUserLastActive = (userId, groupId) => {
+  const userIdStr = userId.toString();
+  const groupIdStr = groupId.toString();
+
+  const groups = userGroupActivity.get(userIdStr);
+  if (!groups) return;
+
+  const activity = groups.get(groupIdStr);
   if (!activity) return;
+
   activity.lastActive = new Date();
 };
-export const updateUserLastMessage = (socketId, groupId) => {
-  const sessions = userGroupActivity.get(socketId);
-  if (!sessions) return;
-  const session = sessions.get(groupId);
-  if (!session) return;
-  session.lastMessageSent = new Date();
-  session.lastActive = new Date();
+export const updateUserLastMessage = (userId, groupId) => {
+  const userIdStr = userId.toString();
+  const groupIdStr = groupId.toString();
+
+  const groups = userGroupActivity.get(userIdStr);
+  if (!groups) return;
+
+  const activity = groups.get(groupIdStr);
+  if (!activity) return;
+
+  const now = new Date();
+  activity.lastMessageSent = now;
+  activity.lastActive = now;
+  // Optional: update socketId if you want
 };
-export const removeUserActivity = (socketId, groupId) => {
-  const sessions = userGroupActivity.get(socketId);
-  if (!sessions) return;
-  sessions.delete(groupId);
-  if (sessions.size === 0) {
-    userGroupActivity.delete(socketId);
+export const removeUserActivity = (userId, groupId) => {
+  const userIdStr = String(userId);    // safe conversion (ObjectId, string, etc.)
+  const groupIdStr = String(groupId);
+
+  const userGroups = userGroupActivity.get(userIdStr);
+  if (!userGroups) {
+    return;
+  }
+
+  userGroups.delete(groupIdStr);
+
+  // Clean up the user entry if they have no more active groups
+  if (userGroups.size === 0) {
+    userGroupActivity.delete(userIdStr);
   }
 };
