@@ -5,6 +5,8 @@ import { sendGroupMessageNotifications } from "../utils/groupNotifications.js";
 
 export const handleSendGroupMessage = async (io, socket, data) => {
   try {
+
+    console.log(`====================> user ${socket.user._id} will send a message`)
     if (!checkUserName(socket.user)) {
       socket.emit("message-error", {
         success: false,
@@ -95,9 +97,6 @@ export const handleSendGroupMessage = async (io, socket, data) => {
       };
     }
 
-    // ===============================
-    // ✅ SAVE MESSAGE WITH OBJECT
-    // ===============================
     const message = {
       sender: socket.user._id,
       content,

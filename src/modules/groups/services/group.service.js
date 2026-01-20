@@ -115,6 +115,8 @@ export const createGroup = asyncHandelr(async (req, res, next) => {
     imageId,
   });
 
+  await group.populate("imageId");
+
   const io = getIO();
   io.emit("group-created", {
     success: true,
@@ -124,7 +126,12 @@ export const createGroup = asyncHandelr(async (req, res, next) => {
       description: group.description,
       admin: group.admin,
       activeUsersCount: group.activeUsers.length,
-      imageId: group.imageId || undefined,
+      image: group.imageId
+        ? {
+            public_id: group.public_id._id,
+            secure_url: group.secure_url.url,
+          }
+        : null,
       createdAt: group.createdAt,
     },
     activeUsers: 1,
