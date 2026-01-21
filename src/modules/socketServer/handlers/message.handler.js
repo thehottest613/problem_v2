@@ -1,12 +1,10 @@
 import { GroupModel } from "../../../DB/models/group.model.js";
-import { updateUserLastMessage } from "../socketIndex.js";
+import { updateUserLastMessage , connectedUsers} from "../socketIndex.js";
 import { checkUserName } from "../utils/checkUsername.js";
 import { sendGroupMessageNotifications } from "../utils/groupNotifications.js";
 
 export const handleSendGroupMessage = async (io, socket, data) => {
   try {
-
-    console.log(`====================> user ${socket.user._id} will send ${data.content}`)
     if (!checkUserName(socket.user)) {
       socket.emit("message-error", {
         success: false,
@@ -17,7 +15,11 @@ export const handleSendGroupMessage = async (io, socket, data) => {
     const { groupId, content, image, voice, type = "text", replyTo } = data;
 
     console.log(
-      `User ${socket.user.username} sending message to group ${groupId}`
+      `====================> user ${socket.user._id} will send ${content}`,
+    );
+
+    console.log(
+      `User ${socket.user.username} sending message to group ${groupId}`,
     );
 
     if (!groupId) {
@@ -116,7 +118,7 @@ export const handleSendGroupMessage = async (io, socket, data) => {
       savedMessage,
       socket.user,
       type,
-      content
+      content,
     );
 
     const messageWithSender = {
@@ -170,11 +172,15 @@ export const handleSendGroupMessage = async (io, socket, data) => {
         updatedAt: new Date(),
       };
 
-      io.to(`user-groups-${memberId}`).emit("group-updated", {
-        success: true,
-        group: groupUpdate,
-        message: savedMessage,
-      });
+      const socketId = connectedUsers.get(memberId.toString());
+
+      if (socketId) {
+        io.to(socketId).emit("group-updated", {
+          success: true,
+          group: groupUpdate,
+          message: savedMessage,
+        });
+      }
     });
   } catch (error) {
     console.error("Error sending message:", error);
@@ -199,7 +205,7 @@ export const handleDeleteGroupMessage = async (io, socket, data) => {
     }
 
     console.log(
-      `User ${socket.user.username} attempting to delete message ${messageId} in group ${groupId}`
+      `User ${socket.user.username} attempting to delete message ${messageId} in group ${groupId}`,
     );
 
     const group = await GroupModel.findById(groupId);
@@ -265,26 +271,29 @@ export const handleDeleteGroupMessage = async (io, socket, data) => {
       allMembers.add(group.admin.toString());
 
       allMembers.forEach((memberId) => {
-        io.to(`user-groups-${memberId}`).emit("group-updated", {
-          success: true,
-          group: {
-            _id: group._id,
-            name: group.name,
-            lastMessage: {
-              content: fallbackContent,
-              type: "system",
-              senderId: socket.user._id,
-              senderName: "System",
-              timestamp: new Date(),
+        const socketId = connectedUsers.get(memberId.toString());
+        if (socketId) {
+          io.to(socketId).emit("group-updated", {
+            success: true,
+            group: {
+              _id: group._id,
+              name: group.name,
+              lastMessage: {
+                content: fallbackContent,
+                type: "system",
+                senderId: socket.user._id,
+                senderName: "System",
+                timestamp: new Date(),
+              },
+              updatedAt: new Date(),
             },
-            updatedAt: new Date(),
-          },
-        });
+          });
+        }
       });
     }
 
     console.log(
-      `Message ${messageId} deleted in group ${groupId} by ${socket.user.username}`
+      `Message ${messageId} deleted in group ${groupId} by ${socket.user.username}`,
     );
   } catch (error) {
     console.error("Error deleting message:", error);

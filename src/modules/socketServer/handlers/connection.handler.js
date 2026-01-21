@@ -12,6 +12,13 @@ import { GroupModel } from "../../../DB/models/group.model.js";
 
 export const handleDisconnection = async (socket, reason) => {
   try {
+    const userId = socket.user?._id?.toString();
+    if (!userId) return;
+    const storedSocketId = connectedUsers.get(userId);
+    if (storedSocketId === socket.id) {
+      connectedUsers.delete(userId);
+    }
+
     console.log(
       `User disconnected: ${socket.user?.username} (${socket.id}) - Reason: ${reason}`,
     );
@@ -20,15 +27,6 @@ export const handleDisconnection = async (socket, reason) => {
 
     await checkAndUpdateGroupActivity(socket, io, socket.user._id);
 
-    if (socket.user?._id) {
-      const userSockets = connectedUsers.get(socket.user._id);
-      if (userSockets) {
-        userSockets.delete(socket.id);
-        if (userSockets.size === 0) {
-          connectedUsers.delete(socket.user._id);
-        }
-      }
-    }
   } catch (error) {
     console.error("Error handle disconnection:", error);
   }

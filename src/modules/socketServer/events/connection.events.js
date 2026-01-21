@@ -3,13 +3,19 @@ import { connectedUsers } from "../socketIndex.js";
 
 export const setupConnectionEvents = (io, socket) => {
   try {
-    if (!connectedUsers.has(socket.user._id)) {
-      connectedUsers.set(socket.user._id, new Set());
+    const userId = socket.user?._id?.toString();
+    const existingSocketId = connectedUsers.get(userId);
+    if (existingSocketId) {
+      console.log(`Duplicate connection blocked for user ${userId}`);
+      socket.emit("connection-error", {
+        message: "User already connected from another device",
+      });
+      socket.disconnect(true);
+      return;
     }
-    connectedUsers.get(socket.user._id).add(socket.id);
+    connectedUsers.set(userId, socket.id);
 
-    socket.join(`user-groups-${socket.user._id}`);
-
+    console.log(`User connected: ${socket.user.username} (${socket.id})`);
     socket.emit("connection-success", {
       success: true,
       message: "Connected to chat server",
