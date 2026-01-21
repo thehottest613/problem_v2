@@ -13,15 +13,11 @@ export const groupCounters = new Map();
 export const groupLastActivity = new Map();
 export const userGroupActivity = new Map();
 
-
 export const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: "*",
       credentials: false,
-    },
-    connectionStateRecovery: {
-      maxDisconnectionDuration: 60 * 1000,
     },
   });
   io.use(authMiddleware);
