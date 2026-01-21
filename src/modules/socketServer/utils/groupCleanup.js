@@ -31,6 +31,7 @@ const deleteInactiveGroups = async () => {
         }
 
         await GroupModel.findByIdAndDelete(groupId);
+        groupCounters.delete(groupId.toString());
         console.log(`Cleanup: Deleted inactive group: ${groupId}`);
 
         cleanupIo.emit("group-deleted", {
@@ -76,7 +77,7 @@ const kickInactiveUsers = async () => {
         if (userRole === "guest") {
           if (activity.flag === false) {
             console.log(
-              `Cleanup: Removing stale guest activity for user ${activity.userId} in group ${groupId}`
+              `Cleanup: Removing stale guest activity for user ${activity.userId} in group ${groupId}`,
             );
             removeUserActivity(userIdStr, groupId);
           }
@@ -88,7 +89,7 @@ const kickInactiveUsers = async () => {
             activity.lastMessageSent = new Date();
             activity.lastActive = new Date();
             console.log(
-              `Admin ${activity.userId} activity refreshed in group ${groupId}`
+              `Admin ${activity.userId} activity refreshed in group ${groupId}`,
             );
           } else {
             removeUserActivity(userIdStr, groupId);
@@ -134,27 +135,32 @@ const kickInactiveUsers = async () => {
         await group.save();
 
         console.log(
-          `Cleanup: Removed inactive active user ${user.userId} from group ${user.groupId}`
+          `Cleanup: Removed inactive active user ${user.userId} from group ${user.groupId}`,
         );
 
         if (user.flag === true && user.onlineFlag === true) {
-          await updateGroupCounters(user.groupId, "active", "leave", null);
-          await updateGroupCounters(user.groupId, "guest", "join", null);
+          await updateGroupCounters(
+            user.groupId,
+            user.userId,
+            "guest",
+            "join",
+            null,
+          );
         }
         await updateGroupCounters(
-            user.groupId,
-            userRole,
-            "indatabase",
-            group.activeUsers.length
-          );
-          cleanupIo.emit("group-counters-updated", {
-            groupId: group._id,
-            activeUsers: groupCounters.get(user.groupId)?.active || 0,
-            guests: groupCounters.get(user.groupId)?.guests || 0,
-            indatabase: groupCounters.get(user.groupId)?.indatabase || 0,
-          });
+          user.groupId,
+          user.userId,
+          userRole,
+          "indatabase",
+          group.activeUsers.length,
+        );
+        cleanupIo.emit("group-counters-updated", {
+          groupId: user.groupId.toString(),
+          activeUsers: groupCounters.get(user.groupId)?.active || 0,
+          guests: groupCounters.get(user.groupId)?.guests || 0,
+          indatabase: groupCounters.get(user.groupId)?.indatabase || 0,
+        });
 
-        // Notify
         const eventPayload = {
           userId: user.userId,
           groupId: user.groupId,
@@ -165,7 +171,6 @@ const kickInactiveUsers = async () => {
         };
 
         if (user.isOnline && user.socket) {
-          // Online user - direct emit
           user.socket.emit("user-kicked", {
             success: false,
             groupId: user.groupId,
@@ -182,7 +187,7 @@ const kickInactiveUsers = async () => {
           });
 
           console.log(
-            `Kicked online inactive user ${user.userId} from ${user.groupId}`
+            `Kicked online inactive user ${user.userId} from ${user.groupId}`,
           );
         } else {
           // Offline user - broadcast to room
@@ -192,21 +197,19 @@ const kickInactiveUsers = async () => {
           });
 
           console.log(
-            `Removed offline inactive user ${user.userId} from ${user.groupId}`
+            `Removed offline inactive user ${user.userId} from ${user.groupId}`,
           );
         }
 
-        // Clean up activity (now using userId)
         removeUserActivity(user.userId, user.groupId);
 
-        // Step 3: Check if group is now empty
         const room = cleanupIo.sockets.adapter.rooms.get(
-          `group-${user.groupId}`
+          `group-${user.groupId}`,
         );
         if (!room || room.size === 0) {
           markGroupForDeletion(user.groupId);
           console.log(
-            `Group ${user.groupId} marked for deletion after kick (empty)`
+            `Group ${user.groupId} marked for deletion after kick (empty)`,
           );
         }
       } catch (error) {
@@ -226,15 +229,21 @@ export const startCleanupIntervals = (ioInstance) => {
     return;
   }
 
-  setInterval(() => {
-    console.log("Cleanup: Running deleteInactiveGroups check...");
-    deleteInactiveGroups();
-  }, 2 * 60 * 1000);
+  setInterval(
+    () => {
+      console.log("Cleanup: Running deleteInactiveGroups check...");
+      deleteInactiveGroups();
+    },
+    2 * 60 * 1000,
+  );
 
-  setInterval(() => {
-    console.log("Cleanup: Running kickInactiveUsers check...");
-    kickInactiveUsers();
-  }, 5 * 60 * 1000);
+  setInterval(
+    () => {
+      console.log("Cleanup: Running kickInactiveUsers check...");
+      kickInactiveUsers();
+    },
+    5 * 60 * 1000,
+  );
 
   console.log("Cleanup: Group cleanup intervals started");
 };

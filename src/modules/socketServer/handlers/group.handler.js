@@ -16,7 +16,7 @@ export const handleJoinGroup = async (io, socket, data) => {
     const { groupId } = data;
 
     console.log(
-      `User ${socket.user.username} attempting to join group ${groupId}`
+      `User ${socket.user.username} attempting to join group ${groupId}`,
     );
 
     const roomName = `group-${groupId}`;
@@ -46,16 +46,15 @@ export const handleJoinGroup = async (io, socket, data) => {
 
     trackUserActivity(socket.id, socket.user._id, groupId, userRole, true);
 
-    ////////////////
-    await updateGroupCounters(groupId, userRole, "join", null);
-    console.log("update counter for user " + socket.user._id);
+    await updateGroupCounters(groupId, socket.user._id, userRole, "join", null);
+    const counters = groupCounters.get(groupId);
+
     io.emit("group-counters-updated", {
-      groupId: group._id,
-      activeUsers: groupCounters.get(groupId).active || 0,
-      guests: groupCounters.get(groupId).guests || 0,
-      indatabase: groupCounters.get(groupId)?.indatabase || 0,
+      groupId: groupId,
+      activeUsers: counters?.actives?.size || 0,
+      guests: counters?.guests?.size || 0,
+      indatabase: counters?.indatabase || 0,
     });
-    /////////////////////
 
     socket.emit("group-joined", {
       success: true,
@@ -74,7 +73,7 @@ export const handleJoinGroup = async (io, socket, data) => {
     });
 
     console.log(
-      `User ${socket.user.username} successfully joined group ${groupId} as ${userRole}`
+      `User ${socket.user.username} successfully joined group ${groupId} as ${userRole}`,
     );
   } catch (error) {
     console.error("Error joining group:", error);
@@ -119,15 +118,22 @@ export const handleLeaveGroup = async (io, socket, data) => {
 
     const userRole = group.getUserRole(socket.user._id);
     updateFlag(socket.user._id);
-    ////////////////
-    await updateGroupCounters(groupId, userRole, "leave", null);
+
+    await updateGroupCounters(
+      groupId,
+      socket.user._id,
+      userRole,
+      "leave",
+      null,
+    );
+    const counters = groupCounters.get(groupId);
+
     io.emit("group-counters-updated", {
-      groupId: group._id,
-      activeUsers: groupCounters.get(groupId).active || 0,
-      guests: groupCounters.get(groupId).guests || 0,
-      indatabase: groupCounters.get(groupId)?.indatabase || 0,
+      groupId: groupId,
+      activeUsers: counters?.actives?.size || 0,
+      guests: counters?.guests?.size || 0,
+      indatabase: counters?.indatabase || 0,
     });
-    /////////////////////
 
     console.log(`User ${socket.user.username} left group ${groupId}`);
 

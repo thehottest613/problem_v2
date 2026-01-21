@@ -7,10 +7,13 @@ import { setupGroupEvents } from "./events/group.events.js";
 import { setupMessageEvents } from "./events/message.events.js";
 import { startCleanupIntervals } from "./utils/groupCleanup.js";
 let io;
+
 export const connectedUsers = new Map();
 export const groupCounters = new Map();
-export const groupLastActivity = new Map(); // groupId -> { lastUserLeft: Date }
-export const userGroupActivity = new Map(); // socketId -> { userId, groupId, lastActive: Date }
+export const groupLastActivity = new Map();
+export const userGroupActivity = new Map();
+
+
 export const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
@@ -24,7 +27,7 @@ export const initializeSocket = (server) => {
   io.use(authMiddleware);
   io.on("connection", (socket) => {
     console.log(
-      `User connected: ${socket.user.username || "null"} (${socket.id})`
+      `User connected: ${socket.user.username || "null"} (${socket.id})`,
     );
     setupConnectionEvents(io, socket);
     setupGroupEvents(io, socket);
@@ -58,7 +61,7 @@ export const trackUserActivity = (
   userId,
   groupId,
   userRole,
-  flag = true
+  flag = true,
 ) => {
   const userIdStr = userId.toString();
 
@@ -78,7 +81,7 @@ export const trackUserActivity = (
     activity.lastActive = new Date();
     activity.flag = flag;
     activity.lastSocketId = socketId;
-    activity.onlineFlag = true
+    activity.onlineFlag = true;
   } else {
     groups.set(groupId, {
       userId: userIdStr,
@@ -107,7 +110,7 @@ export const updateFlag = (userId) => {
   }
 };
 
-export const updateOnlineFlag = (userId , groupId) => {
+export const updateOnlineFlag = (userId, groupId) => {
   const userIdStr = userId.toString();
   const groupIdStr = groupId.toString();
 
@@ -120,7 +123,7 @@ export const updateOnlineFlag = (userId , groupId) => {
   const activity = groups.get(groupIdStr);
   if (!activity) return;
 
-  activity.onlineFlag = false
+  activity.onlineFlag = false;
 };
 export const updateUserLastActive = (userId, groupId) => {
   const userIdStr = userId.toString();

@@ -16,16 +16,20 @@ export const joinAsActive = asyncHandelr(async (req, res, next) => {
     const userRole = group.getUserRole(userId);
     await updateGroupCounters(
       groupId,
+      userId,
       userRole,
       "indatabase",
-      group.activeUsers.length
+      group.activeUsers.length,
     );
+    await updateGroupCounters(groupId, userId, userRole, "join", null);
     const io = getIO();
+    const counters = groupCounters.get(groupId);
+
     io.emit("group-counters-updated", {
-      groupId: group._id,
-      activeUsers: groupCounters.get(groupId)?.active || 0,
-      guests: groupCounters.get(groupId)?.guests || 0,
-      indatabase: groupCounters.get(groupId)?.indatabase || 0,
+      groupId: groupId,
+      activeUsers: counters?.actives?.size || 0,
+      guests: counters?.guests?.size || 0,
+      indatabase: counters?.indatabase || 0,
     });
     io.to(`group-${groupId}`).emit("user-become-active", {
       userId: userId.toString(),
@@ -51,7 +55,7 @@ export const joinAsActive = asyncHandelr(async (req, res, next) => {
 
 export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
   const userId = req.user._id;
-  const { groupId } = req.body; // Assuming route is /groups/:groupId/leave-active or similar
+  const { groupId } = req.body;
 
   const group = await GroupModel.findById(groupId);
   if (!group) {
@@ -61,11 +65,10 @@ export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
   const userRole = group.getUserRole(userId);
   if (userRole !== "active" && userRole !== "admin") {
     return next(
-      new Error("You are not an active member of this group", { cause: 403 })
+      new Error("You are not an active member of this group", { cause: 403 }),
     );
   }
 
-  // If admin, perhaps don't allow leaving active, or handle specially (e.g., keep admin but remove from activeUsers)
   if (userRole === "admin") {
     return next(new Error("You are admin you cant left group", { cause: 403 }));
   }
@@ -75,17 +78,20 @@ export const leaveActiveGroup = asyncHandelr(async (req, res, next) => {
 
   await updateGroupCounters(
     groupId,
+    userId,
     userRole,
     "indatabase",
-    group.activeUsers.length
+    group.activeUsers.length,
   );
 
   const io = getIO();
+  const counters = groupCounters.get(groupId);
+
   io.emit("group-counters-updated", {
-    groupId: group._id,
-    activeUsers: groupCounters.get(groupId)?.active || 0,
-    guests: groupCounters.get(groupId)?.guests || 0,
-    indatabase: groupCounters.get(groupId)?.indatabase || 0,
+    groupId: groupId,
+    activeUsers: counters?.actives?.size || 0,
+    guests: counters?.guests?.size || 0,
+    indatabase: counters?.indatabase || 0,
   });
 
   io.to(`group-${groupId}`).emit("user-left-group", {
@@ -126,12 +132,7 @@ export const createGroup = asyncHandelr(async (req, res, next) => {
       description: group.description,
       admin: group.admin,
       activeUsersCount: group.activeUsers.length,
-      image: group.imageId
-        ? {
-            public_id: group.public_id._id,
-            secure_url: group.secure_url.url,
-          }
-        : null,
+      image: group.imageId?.image.secure_url || undefined,
       createdAt: group.createdAt,
     },
     activeUsers: 1,
@@ -163,17 +164,14 @@ export const getUserGroups = asyncHandelr(async (req, res, next) => {
     return 0;
   });
   const formattedGroups = sortedGroups.map((group) => {
-    const counters = groupCounters.get(group._id.toString()) || {
-      active: 0,
-      guests: 0,
-    };
+    const counters = groupCounters.get(group._id.toString());
     return {
       ...group.toObject(),
       userRole: group.getUserRole(userId),
       isMember: group.isMember(userId),
       counter: {
-        active: counters.active,
-        guests: counters.guests,
+        active: counters?.actives?.size || 0,
+        guests: counters?.guests?.size || 0,
       },
     };
   });
@@ -211,7 +209,7 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   const sortedMessages = [...group.messages].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
   );
 
   const paginatedMessages = sortedMessages.slice(skip, skip + limit);
@@ -322,7 +320,7 @@ export const getMessageById = asyncHandelr(async (req, res, next) => {
   // Check if user is a member
   if (!group.isMember(userId)) {
     return next(
-      new Error("You are not a member of this group", { cause: 403 })
+      new Error("You are not a member of this group", { cause: 403 }),
     );
   }
 

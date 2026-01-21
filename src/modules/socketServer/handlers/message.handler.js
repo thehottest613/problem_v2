@@ -6,7 +6,7 @@ import { sendGroupMessageNotifications } from "../utils/groupNotifications.js";
 export const handleSendGroupMessage = async (io, socket, data) => {
   try {
 
-    console.log(`====================> user ${socket.user._id} will send a message`)
+    console.log(`====================> user ${socket.user._id} will send ${data.content}`)
     if (!checkUserName(socket.user)) {
       socket.emit("message-error", {
         success: false,

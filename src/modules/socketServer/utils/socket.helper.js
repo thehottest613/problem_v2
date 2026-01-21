@@ -1,16 +1,23 @@
 import { groupCounters } from "../socketIndex.js";
 import { GroupModel } from "../../../DB/models/group.model.js";
-export const updateGroupCounters = async (groupId, role, action, indatabasevar) => {
+export const updateGroupCounters = async (
+  groupId,
+  userId,
+  role,
+  action,
+  indatabasevar,
+) => {
   try {
     groupId = groupId.toString();
+    userId = userId.toString();
 
     if (!groupCounters.has(groupId)) {
-      const group = await GroupModel.findById(groupId);
+      const group = await GroupModel.findById(groupId).select("activeUsers");
       if (!group) return;
 
       groupCounters.set(groupId, {
-        active: 0,
-        guests: 0,
+        actives: new Set(),
+        guests: new Set(),
         indatabase: group.activeUsers.length,
       });
     }
@@ -18,12 +25,17 @@ export const updateGroupCounters = async (groupId, role, action, indatabasevar) 
     const counters = groupCounters.get(groupId);
     const isActive = role === "admin" || role === "active";
 
-    if (action === "join") {
-      isActive ? counters.active++ : counters.guests++;
+    if (action === "join" || action === "leave") {
+      counters.actives.delete(userId);
+      counters.guests.delete(userId);
     }
 
-    if (action === "leave") {
-      isActive ? counters.active-- : counters.guests--;
+    if (action === "join") {
+      if (isActive) {
+        counters.actives.add(userId);
+      } else {
+        counters.guests.add(userId);
+      }
     }
 
     if (action === "indatabase" && indatabasevar !== undefined) {
