@@ -1746,7 +1746,7 @@ export const deleteComment = asyncHandelr(async (req, res) => {
 
         try {
           // Store notification in database
-          await NotificationModel.create({
+          await NotificationModell.create({
             userId: postOwner._id,
             postId: post._id,
             commentId: comment._id,
