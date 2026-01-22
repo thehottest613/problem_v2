@@ -1397,15 +1397,6 @@ export const updateComment = asyncHandelr(async (req, res) => {
     const commentAge = now - comment.createdAt;
     const THIRTY_MINUTES = 30 * 60 * 1000;
 
-    if (commentAge > THIRTY_MINUTES) {
-      return res.status(400).json({
-        success: false,
-        message: "Comment cannot be edited after 30 minutes",
-        error: "EDIT_TIMEOUT",
-      });
-    }
-
-    // Store old text for notification
     const oldText = comment.text;
     const newText = text.trim();
 
@@ -1598,55 +1589,59 @@ export const updateComment = asyncHandelr(async (req, res) => {
       });
     }
 
-    // Re-throw for asyncHandler to catch
     throw error;
   }
 });
 
-// Optimized version of findPostForComment to avoid recursion issues
 const findPostForComment = async (commentId) => {
   let currentCommentId = commentId;
-  const visited = new Set(); // Prevent infinite loops
-  
+  const visited = new Set();
+
   while (currentCommentId && !visited.has(currentCommentId.toString())) {
     visited.add(currentCommentId.toString());
-    
-    // Check if current comment is directly in a post
-    const post = await Posttt.findOne({ 
-      comments: currentCommentId 
+
+    const post = await Posttt.findOne({
+      comments: currentCommentId,
     }).populate("user", "_id username fcmToken");
-    
+
     if (post) {
       return post;
     }
-    
-    // If not, get its parent comment
-    const comment = await Commenttt.findById(currentCommentId)
-      .select("parentComment");
-      
-    if (!comment || !comment.parentComment) {
+
+    const comment =
+      await Commenttt.findById(currentCommentId).select("parentComment");
+
+    if (!comment) {
       break;
     }
-    
+
+    if (!comment.parentComment) {
+      break;
+    }
+
+    console.log(`Moving to parent comment ${comment.parentComment.toString()}`);
+
     currentCommentId = comment.parentComment;
   }
-  
+
   return null;
 };
 
 export const deleteComment = asyncHandelr(async (req, res) => {
-  const { commentId } = req.params;
+  const { commentId: commentIdStr } = req.params;
   const userId = req.user._id;
 
   try {
     // Validate commentId format
-    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+    if (!mongoose.Types.ObjectId.isValid(commentIdStr)) {
       return res.status(400).json({
         success: false,
         message: "Invalid comment ID format",
         error: "INVALID_ID_FORMAT",
       });
     }
+
+    const commentId = new mongoose.Types.ObjectId(commentIdStr);
 
     // Find the comment
     const comment = await Commenttt.findById(commentId).populate({
@@ -1662,6 +1657,10 @@ export const deleteComment = asyncHandelr(async (req, res) => {
       });
     }
 
+    console.log(
+      `Comment ${commentId.toString()} found, parent: ${comment.parentComment ? comment.parentComment.toString() : "none"}`,
+    );
+
     // Check if user is authorized (comment owner or admin)
     const isCommentOwner = comment.user._id.toString() === userId.toString();
     const isAdmin = req.user.role === "Owner";
@@ -1675,22 +1674,14 @@ export const deleteComment = asyncHandelr(async (req, res) => {
     }
 
     // Find the post that contains this comment
-    const post = await findPostForComment(commentId);
-
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: "Parent post not found for this comment",
-        error: "POST_NOT_FOUND",
-      });
-    }
+    let post = await findPostForComment(commentId);
+    let postId = post ? post._id : null;
+    let postOwner = post ? post.user : null;
 
     // Store data before deletion for notification
     const commentText = comment.text;
     const commenterId = comment.user._id;
     const commenterUsername = comment.user.username;
-    const postOwner = post.user;
-    const postId = post._id;
 
     // Check if comment has replies
     const hasReplies = await Commenttt.exists({ parentComment: commentId });
@@ -1700,44 +1691,55 @@ export const deleteComment = asyncHandelr(async (req, res) => {
     session.startTransaction();
 
     try {
-      // SOFT DELETE: Mark as deleted instead of removing
-      comment.isDeleted = true;
-      comment.deletedAt = new Date();
-      comment.deletedBy = userId;
-      await comment.save({ session });
+      // OPTION 1: HARD DELETE - Remove the comment completely
+      await Commenttt.findByIdAndDelete(commentId, { session });
 
-      // Remove from post's comments array ONLY if it's a direct comment
-      const isDirectComment = post.comments.some(
-        c => c.toString() === commentId.toString()
-      );
-      
-      if (isDirectComment) {
-        await Posttt.findByIdAndUpdate(
-          postId, 
-          { $pull: { comments: commentId } },
-          { session }
+      // OPTION 2: Modify text to indicate deletion (if you want to keep the record)
+      // await Commenttt.findByIdAndUpdate(
+      //   commentId,
+      //   {
+      //     text: "[This comment has been deleted]",
+      //     user: null, // Remove user reference to hide owner info
+      //   },
+      //   { session }
+      // );
+
+      // Remove from post's comments array ONLY if it's a direct comment and post exists
+      let isDirectComment = false;
+      if (post) {
+        isDirectComment = post.comments.some(
+          (c) => c.toString() === commentId.toString(),
         );
+
+        if (isDirectComment) {
+          await Posttt.findByIdAndUpdate(
+            postId,
+            { $pull: { comments: commentId } },
+            { session },
+          );
+        }
       }
 
       // Remove any replies if they exist (optional)
       if (hasReplies) {
-        await Commenttt.updateMany(
-          { parentComment: commentId },
-          { 
-            $set: { 
-              isDeleted: true,
-              deletedAt: new Date(),
-              deletedBy: userId
-            }
-          },
-          { session }
-        );
+        // OPTION 1: Hard delete replies
+        await Commenttt.deleteMany({ parentComment: commentId }, { session });
+
+        // OPTION 2: Modify replies to indicate deletion
+        // await Commenttt.updateMany(
+        //   { parentComment: commentId },
+        //   {
+        //     text: "[This reply has been deleted because parent comment was deleted]",
+        //     user: null,
+        //   },
+        //   { session }
+        // );
       }
 
       await session.commitTransaction();
       session.endSession();
 
-      // Send notification to post owner if they're not the commenter
+      // Send notification to post owner if they're not the commenter and post exists
       if (postOwner && postOwner._id.toString() !== commenterId.toString()) {
         const notificationTitle = "Comment Deleted";
         const notificationBody = `${
@@ -1799,8 +1801,9 @@ export const deleteComment = asyncHandelr(async (req, res) => {
 
               // Handle invalid FCM tokens
               if (
-                fcmError.code === 'messaging/registration-token-not-registered' ||
-                fcmError.code === 'messaging/invalid-registration-token'
+                fcmError.code ===
+                  "messaging/registration-token-not-registered" ||
+                fcmError.code === "messaging/invalid-registration-token"
               ) {
                 console.log(
                   `Invalid FCM token detected, removing from user ${postOwner._id}`,
@@ -1821,8 +1824,11 @@ export const deleteComment = asyncHandelr(async (req, res) => {
         }
       }
 
-      // Get updated post info
-      const updatedPost = await Posttt.findById(postId);
+      // Get updated post info if post exists
+      let updatedPost = null;
+      if (post) {
+        updatedPost = await Posttt.findById(postId);
+      }
 
       // Return success response
       res.status(200).json({
@@ -1836,32 +1842,34 @@ export const deleteComment = asyncHandelr(async (req, res) => {
               _id: comment.user._id,
               username: comment.user.username,
             },
-            postId: post._id,
+            postId: post ? post._id : null,
             isDeleted: true,
-            deletedAt: comment.deletedAt,
+            deletedAt: new Date(),
             deletedBy: userId,
             hadReplies: hasReplies,
             repliesDeleted: hasReplies,
           },
-          post: {
-            _id: updatedPost._id,
-            text: updatedPost.text,
-            commentsCount: updatedPost.comments.length,
-          },
+          post: updatedPost
+            ? {
+                _id: updatedPost._id,
+                text: updatedPost.text,
+                commentsCount: updatedPost.comments.length,
+              }
+            : null,
           deletionInfo: {
-            method: "soft_delete",
-            timestamp: comment.deletedAt,
+            method: "hard_delete", // Changed from "soft_delete"
+            timestamp: new Date(),
             byUser: isCommentOwner ? "comment_owner" : "admin",
             notificationsSent: !!postOwner,
           },
         },
         metadata: {
-          deletionTime: comment.deletedAt,
+          deletionTime: new Date(),
           action: "delete",
           affectedReplies: hasReplies ? "all_replies_deleted" : "no_replies",
+          orphanComment: !post,
         },
       });
-
     } catch (transactionError) {
       await session.abortTransaction();
       session.endSession();
@@ -3279,13 +3287,6 @@ export const createPostReport = asyncHandelr(async (req, res) => {
     return res.status(400).json({ message: "❌ نوع البلاغ غير صالح" });
   }
 
-  if (!message || message.trim().length < 10) {
-    return res
-      .status(400)
-      .json({ message: "❌ الرسالة مطلوبة ويجب أن تكون 10 أحرف على الأقل" });
-  }
-
-  // منع بلاغ مكرر من نفس المستخدم على نفس البوست
   const existingReport = await PostReport.findOne({ postId, reportedBy });
   if (existingReport) {
     return res
@@ -3297,7 +3298,7 @@ export const createPostReport = asyncHandelr(async (req, res) => {
     postId,
     reportedBy,
     reportType,
-    message: message.trim(),
+    message: message.trim() || null,
   });
 
   await report.populate([
