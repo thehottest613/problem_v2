@@ -76,10 +76,10 @@ export const trackUserActivity = (
       groupId,
       userRole,
       lastActive: new Date(),
-      lastMessageSent: new Date(), // fresh on join
+      lastMessageSent: new Date(), 
       flag,
       onlineFlag: true,
-      lastSocketId: socketId, // optional
+      lastSocketId: socketId, 
     });
   }
 };

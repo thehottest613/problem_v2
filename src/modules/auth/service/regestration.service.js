@@ -70,7 +70,7 @@ export async function sendOTP(phone, method = "whatsapp") {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-      }
+      },
     );
 
     console.log("✅ OTP Sent Successfully:", response.data);
@@ -78,7 +78,7 @@ export async function sendOTP(phone, method = "whatsapp") {
   } catch (error) {
     console.error(
       "❌ Failed to Send OTP:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw error;
   }
@@ -172,7 +172,7 @@ export const signup = asyncHandelr(async (req, res, next) => {
   // ✅ تحقق من وجود واحد من الاتنين فقط
   if (!email && !phone) {
     return next(
-      new Error("يجب إدخال البريد الإلكتروني أو رقم الهاتف", { cause: 400 })
+      new Error("يجب إدخال البريد الإلكتروني أو رقم الهاتف", { cause: 400 }),
     );
   }
 
@@ -194,13 +194,13 @@ export const signup = asyncHandelr(async (req, res, next) => {
     ) {
       // 🟢 مسموح يكمل تسجيل كمستخدم عادي
       console.log(
-        "✅ نفس الإيميل/الهاتف موجود لمقدم خدمة Delivery أو Driver — السماح بالتسجيل كمستخدم عادي."
+        "✅ نفس الإيميل/الهاتف موجود لمقدم خدمة Delivery أو Driver — السماح بالتسجيل كمستخدم عادي.",
       );
     } else {
       // ❌ لو مش مقدم خدمة — ممنوع التسجيل
       if (checkuser.email === email) {
         return next(
-          new Error("البريد الإلكتروني مستخدم من قبل", { cause: 400 })
+          new Error("البريد الإلكتروني مستخدم من قبل", { cause: 400 }),
         );
       }
       if (checkuser.phone === phone) {
@@ -238,7 +238,7 @@ export const signup = asyncHandelr(async (req, res, next) => {
 
       await Usermodel.updateOne(
         { _id: user._id },
-        { emailOTP, otpExpiresAt, attemptCount: 0 }
+        { emailOTP, otpExpiresAt, attemptCount: 0 },
       );
 
       await sendemail({
@@ -258,7 +258,7 @@ export const signup = asyncHandelr(async (req, res, next) => {
   return successresponse(
     res,
     "تم إنشاء الحساب بنجاح، وتم إرسال رمز التحقق",
-    201
+    201,
   );
 });
 
@@ -360,7 +360,7 @@ export const forgetPassword = asyncHandelr(async (req, res, next) => {
 
   if (!email && !phone) {
     return next(
-      new Error("❌ يجب إدخال البريد الإلكتروني أو رقم الهاتف", { cause: 400 })
+      new Error("❌ يجب إدخال البريد الإلكتروني أو رقم الهاتف", { cause: 400 }),
     );
   }
 
@@ -437,7 +437,7 @@ export const forgetPassword = asyncHandelr(async (req, res, next) => {
     } catch (error) {
       console.error(
         "❌ فشل في إرسال OTP للهاتف:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return res.status(500).json({
         success: false,
@@ -456,7 +456,7 @@ export const forgetPassword = asyncHandelr(async (req, res, next) => {
 
       await Usermodel.updateOne(
         { _id: user._id },
-        { emailOTP: hashedOtp, otpExpiresAt, attemptCount: 0 }
+        { emailOTP: hashedOtp, otpExpiresAt, attemptCount: 0 },
       );
 
       await sendemail({
@@ -763,8 +763,8 @@ export const resetPassword = asyncHandelr(async (req, res, next) => {
     return next(
       new Error(
         "❌ برجاء إدخال (إيميل أو رقم هاتف) + كود التحقق + كلمة المرور الجديدة",
-        { cause: 400 }
-      )
+        { cause: 400 },
+      ),
     );
   }
 
@@ -783,7 +783,7 @@ export const resetPassword = asyncHandelr(async (req, res, next) => {
       return next(
         new Error("❌ يجب إدخال نوع الخدمة (serviceType) لمقدمي الخدمة", {
           cause: 400,
-        })
+        }),
       );
     }
 
@@ -810,7 +810,7 @@ export const resetPassword = asyncHandelr(async (req, res, next) => {
       return next(
         new Error("🚫 البريد يخص حساب مزود خدمة وليس مستخدم عادي", {
           cause: 400,
-        })
+        }),
       );
     }
     return next(new Error("❌ المستخدم غير موجود", { cause: 404 }));
@@ -822,13 +822,13 @@ export const resetPassword = asyncHandelr(async (req, res, next) => {
       return next(
         new Error("🚫 نوع الحساب المرسل لا يطابق نوع الحساب المسجل بالبريد", {
           cause: 400,
-        })
+        }),
       );
     }
 
     if (!user.emailOTP) {
       return next(
-        new Error("❌ لم يتم إرسال كود تحقق لهذا الحساب", { cause: 400 })
+        new Error("❌ لم يتم إرسال كود تحقق لهذا الحساب", { cause: 400 }),
       );
     }
 
@@ -849,10 +849,12 @@ export const resetPassword = asyncHandelr(async (req, res, next) => {
           {
             blockUntil: new Date(Date.now() + 2 * 60 * 1000),
             attemptCount: 0,
-          }
+          },
         );
         return next(
-          new Error("🚫 تم حظرك مؤقتًا بعد محاولات خاطئة كثيرة", { cause: 429 })
+          new Error("🚫 تم حظرك مؤقتًا بعد محاولات خاطئة كثيرة", {
+            cause: 429,
+          }),
         );
       }
       await Usermodel.updateOne({ email }, { attemptCount: attempts });
@@ -870,13 +872,13 @@ export const resetPassword = asyncHandelr(async (req, res, next) => {
           attemptCount: 0,
           blockUntil: 0,
         },
-      }
+      },
     );
 
     return successresponse(
       res,
       "✅ تم تغيير كلمة المرور بنجاح عبر البريد الإلكتروني",
-      200
+      200,
     );
   }
 
@@ -906,17 +908,17 @@ export const resetPassword = asyncHandelr(async (req, res, next) => {
         return successresponse(
           res,
           "✅ تم إعادة تعيين كلمة المرور بنجاح عبر الهاتف",
-          200
+          200,
         );
       } else {
         return next(
-          new Error("❌ كود التحقق غير صحيح أو منتهي الصلاحية", { cause: 400 })
+          new Error("❌ كود التحقق غير صحيح أو منتهي الصلاحية", { cause: 400 }),
         );
       }
     } catch (error) {
       console.error(
         "❌ فشل التحقق من OTP عبر Authentica:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return next(new Error("❌ فشل التحقق من OTP عبر الهاتف", { cause: 500 }));
     }
@@ -1058,16 +1060,16 @@ cron.schedule("0 * * * *", async () => {
 
   const users = await Usermodel.find(
     { _id: { $in: userIds } },
-    { email: 1, phone: 1 }
+    { email: 1, phone: 1 },
   );
   const contacts = users.flatMap((user) =>
-    [user.email, user.phone].filter(Boolean)
+    [user.email, user.phone].filter(Boolean),
   );
 
   await ReportModel.deleteMany({ contact: { $in: contacts } });
 
   console.log(
-    `🗑️ تم حذف جميع البوستات والكومنتات لـ ${userIds.length} مستخدم(ين) منتهية الاسم`
+    `🗑️ تم حذف جميع البوستات والكومنتات لـ ${userIds.length} مستخدم(ين) منتهية الاسم`,
   );
 
   // بعد كده نحذف الاسم و lastUsernameUpdate
@@ -1076,7 +1078,7 @@ cron.schedule("0 * * * *", async () => {
     {
       $set: { username: null, ImageId: null },
       $unset: { lastUsernameUpdate: "" },
-    }
+    },
   );
 
   console.log(`🗑️ تم حذف اسم ${result.modifiedCount} مستخدم(ين) عادي(ين)`);
@@ -1330,11 +1332,11 @@ export const addComment = asyncHandelr(async (req, res) => {
         if (
           sendError.message.includes("Requested entity was not found") ||
           sendError.message.includes(
-            "The registration token is not a valid FCM registration token"
+            "The registration token is not a valid FCM registration token",
           )
         ) {
           console.log(
-            `🗑️ توكن FCM باطل، جاري حذفه من المستخدم ${post.user._id}`
+            `🗑️ توكن FCM باطل، جاري حذفه من المستخدم ${post.user._id}`,
           );
 
           post.user.fcmToken = null;
@@ -1425,7 +1427,7 @@ export const updateComment = asyncHandelr(async (req, res) => {
       // Find the post where this comment is in the comments array
       post = await Posttt.findOne({ comments: commentId }).populate(
         "user",
-        "_id username fcmToken"
+        "_id username fcmToken",
       );
 
       if (post && post.user) {
@@ -1475,7 +1477,7 @@ export const updateComment = asyncHandelr(async (req, res) => {
           });
 
           console.log(
-            `Notification stored for comment update to user ${postOwner._id}, notification ID: ${notification._id}`
+            `Notification stored for comment update to user ${postOwner._id}, notification ID: ${notification._id}`,
           );
 
           // Send push notification if token exists
@@ -1499,18 +1501,18 @@ export const updateComment = asyncHandelr(async (req, res) => {
             } catch (fcmError) {
               console.error(
                 "Failed to send push notification:",
-                fcmError.message
+                fcmError.message,
               );
 
               // Handle invalid FCM tokens
               if (
                 fcmError.message.includes("Requested entity was not found") ||
                 fcmError.message.includes(
-                  "The registration token is not a valid FCM registration token"
+                  "The registration token is not a valid FCM registration token",
                 )
               ) {
                 console.log(
-                  `Invalid FCM token detected, removing from user ${postOwner._id}`
+                  `Invalid FCM token detected, removing from user ${postOwner._id}`,
                 );
 
                 // Update user to remove invalid token
@@ -1523,7 +1525,7 @@ export const updateComment = asyncHandelr(async (req, res) => {
         } catch (notificationError) {
           console.error(
             "Failed to create notification:",
-            notificationError.message
+            notificationError.message,
           );
           // Don't fail the comment update if notification fails
         }
@@ -1601,11 +1603,51 @@ export const updateComment = asyncHandelr(async (req, res) => {
   }
 });
 
+// Optimized version of findPostForComment to avoid recursion issues
+const findPostForComment = async (commentId) => {
+  let currentCommentId = commentId;
+  const visited = new Set(); // Prevent infinite loops
+  
+  while (currentCommentId && !visited.has(currentCommentId.toString())) {
+    visited.add(currentCommentId.toString());
+    
+    // Check if current comment is directly in a post
+    const post = await Posttt.findOne({ 
+      comments: currentCommentId 
+    }).populate("user", "_id username fcmToken");
+    
+    if (post) {
+      return post;
+    }
+    
+    // If not, get its parent comment
+    const comment = await Commenttt.findById(currentCommentId)
+      .select("parentComment");
+      
+    if (!comment || !comment.parentComment) {
+      break;
+    }
+    
+    currentCommentId = comment.parentComment;
+  }
+  
+  return null;
+};
+
 export const deleteComment = asyncHandelr(async (req, res) => {
   const { commentId } = req.params;
   const userId = req.user._id;
 
   try {
+    // Validate commentId format
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid comment ID format",
+        error: "INVALID_ID_FORMAT",
+      });
+    }
+
     // Find the comment
     const comment = await Commenttt.findById(commentId).populate({
       path: "user",
@@ -1633,10 +1675,7 @@ export const deleteComment = asyncHandelr(async (req, res) => {
     }
 
     // Find the post that contains this comment
-    const post = await Posttt.findOne({ comments: commentId }).populate(
-      "user",
-      "_id username fcmToken"
-    );
+    const post = await findPostForComment(commentId);
 
     if (!post) {
       return res.status(404).json({
@@ -1656,155 +1695,188 @@ export const deleteComment = asyncHandelr(async (req, res) => {
     // Check if comment has replies
     const hasReplies = await Commenttt.exists({ parentComment: commentId });
 
-    // SOFT DELETE: Mark as deleted instead of removing
-    comment.isDeleted = true;
-    comment.deletedAt = new Date();
-    comment.deletedBy = userId;
-    await comment.save();
+    // Use transaction to ensure consistency
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // OPTIONAL: Remove from post's comments array
-    await Posttt.findByIdAndUpdate(postId, { $pull: { comments: commentId } });
+    try {
+      // SOFT DELETE: Mark as deleted instead of removing
+      comment.isDeleted = true;
+      comment.deletedAt = new Date();
+      comment.deletedBy = userId;
+      await comment.save({ session });
 
-    // Remove any replies if they exist (optional)
-    if (hasReplies) {
-      await Commenttt.deleteMany({ parentComment: commentId });
-    }
-
-    // Send notification to post owner if they're not the commenter
-    if (postOwner && postOwner._id.toString() !== commenterId.toString()) {
-      const notificationTitle = "Comment Deleted";
-      const notificationBody = `${
-        commenterUsername || "A user"
-      } deleted their comment on your post`;
-
-      try {
-        // Store notification in database
-        await NotificationModell.create({
-          userId: postOwner._id,
-          postId: post._id,
-          commentId: comment._id,
-          title: {
-            en: notificationTitle,
-            ar: "تم حذف تعليق",
-          },
-          body: {
-            en: notificationBody,
-            ar: `${commenterUsername || "مستخدم"} قام بحذف تعليقه على منشورك`,
-          },
-          type: "comment_delete",
-          deviceToken: postOwner.fcmToken || null,
-          data: {
-            postId: post._id.toString(),
-            commentId: comment._id.toString(),
-            commenterUsername: commenterUsername || "User",
-            deletedText: commentText.substring(0, 100),
-            wasDeletedByAdmin: !isCommentOwner,
-          },
-        });
-
-        console.log(
-          `Notification stored for comment deletion to user ${postOwner._id}`
+      // Remove from post's comments array ONLY if it's a direct comment
+      const isDirectComment = post.comments.some(
+        c => c.toString() === commentId.toString()
+      );
+      
+      if (isDirectComment) {
+        await Posttt.findByIdAndUpdate(
+          postId, 
+          { $pull: { comments: commentId } },
+          { session }
         );
+      }
 
-        // Send push notification if token exists
-        if (postOwner.fcmToken) {
-          try {
-            await admin.messaging().send({
-              notification: {
-                title: notificationTitle,
-                body: notificationBody,
-              },
-              data: {
-                postId: post._id.toString(),
-                commentId: comment._id.toString(),
-                type: "comment_delete",
-                action: "delete",
-              },
-              token: postOwner.fcmToken,
-            });
+      // Remove any replies if they exist (optional)
+      if (hasReplies) {
+        await Commenttt.updateMany(
+          { parentComment: commentId },
+          { 
+            $set: { 
+              isDeleted: true,
+              deletedAt: new Date(),
+              deletedBy: userId
+            }
+          },
+          { session }
+        );
+      }
 
-            console.log(`Push notification sent for comment deletion`);
-          } catch (fcmError) {
-            console.error(
-              "Failed to send push notification:",
-              fcmError.message
-            );
+      await session.commitTransaction();
+      session.endSession();
 
-            // Handle invalid FCM tokens
-            if (
-              fcmError.message.includes("Requested entity was not found") ||
-              fcmError.message.includes(
-                "The registration token is not a valid FCM registration token"
-              )
-            ) {
-              console.log(
-                `Invalid FCM token detected, removing from user ${postOwner._id}`
+      // Send notification to post owner if they're not the commenter
+      if (postOwner && postOwner._id.toString() !== commenterId.toString()) {
+        const notificationTitle = "Comment Deleted";
+        const notificationBody = `${
+          commenterUsername || "A user"
+        } deleted their comment on your post`;
+
+        try {
+          // Store notification in database
+          await NotificationModel.create({
+            userId: postOwner._id,
+            postId: post._id,
+            commentId: comment._id,
+            title: {
+              en: notificationTitle,
+              ar: "تم حذف تعليق",
+            },
+            body: {
+              en: notificationBody,
+              ar: `${commenterUsername || "مستخدم"} قام بحذف تعليقه على منشورك`,
+            },
+            type: "comment_delete",
+            deviceToken: postOwner.fcmToken || null,
+            data: {
+              postId: post._id.toString(),
+              commentId: comment._id.toString(),
+              commenterUsername: commenterUsername || "User",
+              deletedText: commentText.substring(0, 100),
+              wasDeletedByAdmin: !isCommentOwner,
+            },
+          });
+
+          console.log(
+            `Notification stored for comment deletion to user ${postOwner._id}`,
+          );
+
+          // Send push notification if token exists
+          if (postOwner.fcmToken) {
+            try {
+              await admin.messaging().send({
+                notification: {
+                  title: notificationTitle,
+                  body: notificationBody,
+                },
+                data: {
+                  postId: post._id.toString(),
+                  commentId: comment._id.toString(),
+                  type: "comment_delete",
+                  action: "delete",
+                },
+                token: postOwner.fcmToken,
+              });
+
+              console.log(`Push notification sent for comment deletion`);
+            } catch (fcmError) {
+              console.error(
+                "Failed to send push notification:",
+                fcmError.message,
               );
 
-              await UserModel.findByIdAndUpdate(postOwner._id, {
-                $set: { fcmToken: null },
-              });
+              // Handle invalid FCM tokens
+              if (
+                fcmError.code === 'messaging/registration-token-not-registered' ||
+                fcmError.code === 'messaging/invalid-registration-token'
+              ) {
+                console.log(
+                  `Invalid FCM token detected, removing from user ${postOwner._id}`,
+                );
+
+                await UserModel.findByIdAndUpdate(postOwner._id, {
+                  $set: { fcmToken: null },
+                });
+              }
             }
           }
+        } catch (notificationError) {
+          console.error(
+            "Failed to create notification:",
+            notificationError.message,
+          );
+          // Don't fail the comment deletion if notification fails
         }
-      } catch (notificationError) {
-        console.error(
-          "Failed to create notification:",
-          notificationError.message
-        );
-        // Don't fail the comment deletion if notification fails
       }
-    }
 
-    // Return success response
-    res.status(200).json({
-      success: true,
-      message: "Comment deleted successfully",
-      data: {
-        comment: {
-          _id: comment._id,
-          text: "[This comment has been deleted]",
-          user: {
-            _id: comment.user._id,
-            username: comment.user.username,
+      // Get updated post info
+      const updatedPost = await Posttt.findById(postId);
+
+      // Return success response
+      res.status(200).json({
+        success: true,
+        message: "Comment deleted successfully",
+        data: {
+          comment: {
+            _id: comment._id,
+            text: "[This comment has been deleted]",
+            user: {
+              _id: comment.user._id,
+              username: comment.user.username,
+            },
+            postId: post._id,
+            isDeleted: true,
+            deletedAt: comment.deletedAt,
+            deletedBy: userId,
+            hadReplies: hasReplies,
+            repliesDeleted: hasReplies,
           },
-          postId: post._id,
-          isDeleted: true,
-          deletedAt: comment.deletedAt,
-          deletedBy: userId,
-          hadReplies: hasReplies,
-          repliesDeleted: hasReplies,
+          post: {
+            _id: updatedPost._id,
+            text: updatedPost.text,
+            commentsCount: updatedPost.comments.length,
+          },
+          deletionInfo: {
+            method: "soft_delete",
+            timestamp: comment.deletedAt,
+            byUser: isCommentOwner ? "comment_owner" : "admin",
+            notificationsSent: !!postOwner,
+          },
         },
-        post: {
-          _id: post._id,
-          text: post.text,
-          commentsCount: post.comments.length - 1, // Updated count
+        metadata: {
+          deletionTime: comment.deletedAt,
+          action: "delete",
+          affectedReplies: hasReplies ? "all_replies_deleted" : "no_replies",
         },
-        deletionInfo: {
-          method: "soft_delete",
-          timestamp: comment.deletedAt,
-          byUser: isCommentOwner ? "comment_owner" : "admin",
-          notificationsSent: !!postOwner,
-        },
-      },
-      metadata: {
-        deletionTime: comment.deletedAt,
-        action: "delete",
-        affectedReplies: hasReplies ? "all_replies_deleted" : "no_replies",
-      },
-    });
+      });
+
+    } catch (transactionError) {
+      await session.abortTransaction();
+      session.endSession();
+      throw transactionError;
+    }
   } catch (error) {
     console.error("Error deleting comment:", error);
 
-    if (error.message.includes("Cast to ObjectId failed")) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid comment ID format",
-        error: "INVALID_ID_FORMAT",
-      });
-    }
-
-    throw error;
+    // Return appropriate error response
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete comment",
+      error: error.message,
+      code: "INTERNAL_SERVER_ERROR",
+    });
   }
 });
 
@@ -1827,7 +1899,7 @@ export const reactToPost = asyncHandelr(async (req, res) => {
 
   // البحث عن reaction موجود من نفس المستخدم ونفس النوع
   const existingReactionIndex = post.reactions.findIndex(
-    (r) => r.user.toString() === req.user._id.toString() && r.type === type
+    (r) => r.user.toString() === req.user._id.toString() && r.type === type,
   );
 
   let action = "added";
@@ -1844,7 +1916,7 @@ export const reactToPost = asyncHandelr(async (req, res) => {
   }
 
   post.reactions = post.reactions.filter(
-    (r) => r.user.toString() !== req.user._id.toString()
+    (r) => r.user.toString() !== req.user._id.toString(),
   );
 
   post.reactions.push({
@@ -1925,7 +1997,7 @@ export const reactToPost = asyncHandelr(async (req, res) => {
         });
 
         console.log(
-          `✅ تم إرسال إشعار reaction (${userLang}) إلى ${post.user.username}`
+          `✅ تم إرسال إشعار reaction (${userLang}) إلى ${post.user.username}`,
         );
       } catch (sendError) {
         console.error("❌ فشل إرسال إشعار الـ reaction:", sendError.message);
@@ -1933,11 +2005,11 @@ export const reactToPost = asyncHandelr(async (req, res) => {
         if (
           sendError.message.includes("Requested entity was not found") ||
           sendError.message.includes(
-            "The registration token is not a valid FCM registration token"
+            "The registration token is not a valid FCM registration token",
           )
         ) {
           console.log(
-            `🗑️ توكن FCM باطل، جاري حذفه من المستخدم ${post.user._id}`
+            `🗑️ توكن FCM باطل، جاري حذفه من المستخدم ${post.user._id}`,
           );
 
           post.user.fcmToken = null;
@@ -1946,7 +2018,7 @@ export const reactToPost = asyncHandelr(async (req, res) => {
       }
     } else {
       console.log(
-        `⚠️ لا يوجد fcmToken للمستخدم ${post.user._id}، الإشعار مخزن فقط`
+        `⚠️ لا يوجد fcmToken للمستخدم ${post.user._id}، الإشعار مخزن فقط`,
       );
     }
   }
@@ -2157,7 +2229,7 @@ export const getMyPosts = asyncHandelr(async (req, res) => {
     const countAllComments = (comments) => {
       return comments.reduce(
         (sum, c) => sum + 1 + countAllComments(c.replies || []),
-        0
+        0,
       );
     };
 
@@ -2443,7 +2515,7 @@ export const getAllPosts = asyncHandelr(async (req, res) => {
     const countAllComments = (comments) => {
       return comments.reduce(
         (sum, c) => sum + 1 + countAllComments(c.replies || []),
-        0
+        0,
       );
     };
 
@@ -2485,7 +2557,7 @@ export const MarkAllNotificationsAsRead = asyncHandelr(async (req, res) => {
     },
     {
       isRead: true,
-    }
+    },
   );
 
   if (result.modifiedCount === 0) {
@@ -2629,7 +2701,7 @@ export const reactToComment = asyncHandelr(async (req, res) => {
 
   // البحث عن reaction موجود من نفس المستخدم ونفس النوع
   const existingReactionIndex = comment.reactions.findIndex(
-    (r) => r.user.toString() === req.user._id.toString() && r.type === type
+    (r) => r.user.toString() === req.user._id.toString() && r.type === type,
   );
 
   let action = "added";
@@ -2646,7 +2718,7 @@ export const reactToComment = asyncHandelr(async (req, res) => {
   }
 
   comment.reactions = comment.reactions.filter(
-    (r) => r.user.toString() !== req.user._id.toString()
+    (r) => r.user.toString() !== req.user._id.toString(),
   );
 
   comment.reactions.push({
@@ -2710,7 +2782,7 @@ export const reactToComment = asyncHandelr(async (req, res) => {
       });
 
       console.log(
-        `✅ تم تخزين إشعار reaction على تعليق للمستخدم ${comment.user._id}`
+        `✅ تم تخزين إشعار reaction على تعليق للمستخدم ${comment.user._id}`,
       );
     } catch (storeError) {
       console.error("❌ فشل تخزين الإشعار في الداتابيز:", storeError.message);
@@ -2732,17 +2804,17 @@ export const reactToComment = asyncHandelr(async (req, res) => {
       } catch (sendError) {
         console.error(
           "❌ فشل إرسال إشعار reaction على تعليق:",
-          sendError.message
+          sendError.message,
         );
 
         if (
           sendError.message.includes("Requested entity was not found") ||
           sendError.message.includes(
-            "The registration token is not a valid FCM registration token"
+            "The registration token is not a valid FCM registration token",
           )
         ) {
           console.log(
-            `🗑️ توكن FCM باطل، جاري حذفه من المستخدم ${comment.user._id}`
+            `🗑️ توكن FCM باطل، جاري حذفه من المستخدم ${comment.user._id}`,
           );
 
           comment.user.fcmToken = null;
@@ -2751,7 +2823,7 @@ export const reactToComment = asyncHandelr(async (req, res) => {
       }
     } else {
       console.log(
-        `⚠️ لا يوجد fcmToken للمستخدم ${comment.user._id}، الإشعار مخزن فقط`
+        `⚠️ لا يوجد fcmToken للمستخدم ${comment.user._id}، الإشعار مخزن فقط`,
       );
     }
   }
@@ -2776,7 +2848,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
   // ✅ تحقق من وجود واحد من الاتنين فقط
   if (!email && !phone) {
     return next(
-      new Error("يجب إدخال البريد الإلكتروني أو رقم الهاتف", { cause: 400 })
+      new Error("يجب إدخال البريد الإلكتروني أو رقم الهاتف", { cause: 400 }),
     );
   }
 
@@ -2804,14 +2876,14 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
       // ✅ يسمح له فقط بالتسجيل كـ Driver أو Delivery
       if (["Driver", "Delivery"].includes(serviceType)) {
         console.log(
-          `🚗 المستخدم User يسجل الآن كمقدم خدمة ${serviceType}، مسموح بالتسجيل.`
+          `🚗 المستخدم User يسجل الآن كمقدم خدمة ${serviceType}، مسموح بالتسجيل.`,
         );
       } else {
         return next(
           new Error(
             `❌ لا يمكنك التسجيل كـ ${serviceType} باستخدام حساب User. فقط Driver أو Delivery مسموحين.`,
-            { cause: 400 }
-          )
+            { cause: 400 },
+          ),
         );
       }
     }
@@ -2824,7 +2896,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
       return next(
         new Error(`أنت مسجل بالفعل كمقدم خدمة بنفس النوع (${serviceType})`, {
           cause: 400,
-        })
+        }),
       );
     }
 
@@ -2837,7 +2909,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
       return next(
         new Error("❌ لا يمكنك التسجيل كـ Driver و Delivery في نفس الوقت.", {
           cause: 400,
-        })
+        }),
       );
     }
 
@@ -2850,7 +2922,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
       return next(
         new Error("❌ لا يمكنك التسجيل كـ Host و Doctor في نفس الوقت.", {
           cause: 400,
-        })
+        }),
       );
     }
 
@@ -2884,7 +2956,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
   if (req.files?.nationalIdImage?.[0]) {
     uploadedFiles.nationalIdImage = await uploadToCloud(
       req.files.nationalIdImage[0],
-      `users/nationalIds`
+      `users/nationalIds`,
     );
   }
 
@@ -2892,7 +2964,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
   if (req.files?.driverLicenseImage?.[0]) {
     uploadedFiles.driverLicenseImage = await uploadToCloud(
       req.files.driverLicenseImage[0],
-      `users/driverLicenses`
+      `users/driverLicenses`,
     );
   }
 
@@ -2900,7 +2972,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
   if (req.files?.carLicenseImage?.[0]) {
     uploadedFiles.carLicenseImage = await uploadToCloud(
       req.files.carLicenseImage[0],
-      `users/carLicenses`
+      `users/carLicenses`,
     );
   }
 
@@ -2917,7 +2989,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
   if (req.files?.Insurancedocuments?.[0]) {
     uploadedFiles.Insurancedocuments = await uploadToCloud(
       req.files.Insurancedocuments[0],
-      `users/additionalDocs`
+      `users/additionalDocs`,
     );
   }
 
@@ -2925,7 +2997,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
   if (req.files?.profiePicture?.[0]) {
     uploadedFiles.profiePicture = await uploadToCloud(
       req.files.profiePicture[0],
-      `users/profilePictures`
+      `users/profilePictures`,
     );
   }
 
@@ -2968,7 +3040,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
           emailOTP,
           otpExpiresAt,
           attemptCount: 0,
-        }
+        },
       );
 
       await sendemail({
@@ -2988,7 +3060,7 @@ export const signupServiceProvider = asyncHandelr(async (req, res, next) => {
   return successresponse(
     res,
     "تم إنشاء حساب مقدم الخدمة بنجاح، وتم إرسال رمز التحقق",
-    201
+    201,
   );
 });
 
@@ -3123,7 +3195,7 @@ export const updatePostStatus = asyncHandelr(async (req, res) => {
       });
 
       console.log(
-        `✅ تم تخزين إشعار ${status} للبوست للمستخدم ${post.user._id}`
+        `✅ تم تخزين إشعار ${status} للبوست للمستخدم ${post.user._id}`,
       );
     } catch (storeError) {
       console.error("❌ فشل تخزين إشعار حالة البوست:", storeError.message);
@@ -3149,11 +3221,11 @@ export const updatePostStatus = asyncHandelr(async (req, res) => {
         if (
           sendError.message.includes("Requested entity was not found") ||
           sendError.message.includes(
-            "The registration token is not a valid FCM registration token"
+            "The registration token is not a valid FCM registration token",
           )
         ) {
           console.log(
-            `🗑️ توكن FCM باطل، جاري حذفه من المستخدم ${post.user._id}`
+            `🗑️ توكن FCM باطل، جاري حذفه من المستخدم ${post.user._id}`,
           );
 
           post.user.fcmToken = null;
@@ -3507,7 +3579,7 @@ export const updateUser = asyncHandelr(async (req, res, next) => {
     if (checkuser) {
       if (checkuser.email === email) {
         return next(
-          new Error("البريد الإلكتروني مستخدم من قبل", { cause: 400 })
+          new Error("البريد الإلكتروني مستخدم من قبل", { cause: 400 }),
         );
       }
       if (checkuser.phone === phone) {
@@ -3572,7 +3644,7 @@ export const createOrUpdatePrivacyPolicy = asyncHandelr(async (req, res) => {
 
 export const getActivePrivacyPolicy = asyncHandelr(async (req, res) => {
   const policy = await PrivacyPolicy.findOne({ isActive: true }).select(
-    "content version createdAt"
+    "content version createdAt",
   );
 
   if (!policy) {
@@ -3692,37 +3764,37 @@ export const getDriverStats = asyncHandelr(async (req, res) => {
   // ✅ إجمالي الأرباح الكلي
   const totalEarnings = finishedRides.reduce(
     (sum, ride) => sum + (ride.price || 0),
-    0
+    0,
   );
 
   // ✅ الرحلات اليوم
   const todayRides = finishedRides.filter(
-    (ride) => new Date(ride.createdAt) >= startOfDay
+    (ride) => new Date(ride.createdAt) >= startOfDay,
   );
   const todayCount = todayRides.length;
   const todayEarnings = todayRides.reduce(
     (sum, ride) => sum + (ride.price || 0),
-    0
+    0,
   );
 
   // ✅ الرحلات هذا الأسبوع
   const weekRides = finishedRides.filter(
-    (ride) => new Date(ride.createdAt) >= startOfWeek
+    (ride) => new Date(ride.createdAt) >= startOfWeek,
   );
   const weekCount = weekRides.length;
   const weekEarnings = weekRides.reduce(
     (sum, ride) => sum + (ride.price || 0),
-    0
+    0,
   );
 
   // ✅ الرحلات هذا الشهر
   const monthRides = finishedRides.filter(
-    (ride) => new Date(ride.createdAt) >= startOfMonth
+    (ride) => new Date(ride.createdAt) >= startOfMonth,
   );
   const monthCount = monthRides.length;
   const monthEarnings = monthRides.reduce(
     (sum, ride) => sum + (ride.price || 0),
-    0
+    0,
   );
 
   // 🕒 تجهيز قائمة الرحلات مع التاريخ والوقت
@@ -3970,7 +4042,7 @@ export const updateRentalProperty = asyncHandelr(async (req, res, next) => {
 
   if (!property) {
     return next(
-      new Error("العقار غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 })
+      new Error("العقار غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 }),
     );
   }
 
@@ -4079,7 +4151,7 @@ export const deleteRentalProperty = asyncHandelr(async (req, res, next) => {
 
   if (!property) {
     return next(
-      new Error("العقار غير موجود أو ليس لديك صلاحية لحذفه", { cause: 404 })
+      new Error("العقار غير موجود أو ليس لديك صلاحية لحذفه", { cause: 404 }),
     );
   }
 
@@ -4217,7 +4289,7 @@ export const createDoctor = asyncHandelr(async (req, res, next) => {
   if (req.files?.profileImage?.[0]) {
     uploadedFiles.profileImage = await uploadToCloud(
       req.files.profileImage[0],
-      `doctors/profile`
+      `doctors/profile`,
     );
   }
 
@@ -4345,7 +4417,7 @@ export const getAccessibleSupermarket = asyncHandelr(async (req, res, next) => {
 
   if (!supermarket) {
     return next(
-      new Error("لا يوجد سوبر ماركت لديك صلاحية الوصول إليه", { cause: 404 })
+      new Error("لا يوجد سوبر ماركت لديك صلاحية الوصول إليه", { cause: 404 }),
     );
   }
 
@@ -4393,7 +4465,7 @@ export const getSupermarketWithSectionsAndProducts = asyncHandelr(
 
     if (!supermarket) {
       return next(
-        new Error("غير مصرح لك بعرض بيانات هذا السوبر ماركت", { cause: 403 })
+        new Error("غير مصرح لك بعرض بيانات هذا السوبر ماركت", { cause: 403 }),
       );
     }
 
@@ -4446,7 +4518,7 @@ export const getSupermarketWithSectionsAndProducts = asyncHandelr(
       count: sectionsWithProducts.length,
       data: sectionsWithProducts,
     });
-  }
+  },
 );
 
 export const addAuthorizedUser = asyncHandelr(async (req, res, next) => {
@@ -4470,7 +4542,7 @@ export const addAuthorizedUser = asyncHandelr(async (req, res, next) => {
 
   // تحقق إذا كان المستخدم مضاف مسبقاً
   const alreadyExists = restaurant.authorizedUsers.some(
-    (auth) => auth.user.toString() === userId
+    (auth) => auth.user.toString() === userId,
   );
   if (alreadyExists) {
     return next(new Error("المستخدم مضاف بالفعل", { cause: 400 }));
@@ -4485,7 +4557,7 @@ export const addAuthorizedUser = asyncHandelr(async (req, res, next) => {
 
   // إرجاع المطعم مع بيانات المستخدمين المصرح لهم
   const updatedRestaurant = await RestaurantModell.findById(
-    restaurant._id
+    restaurant._id,
   ).populate("authorizedUsers.user", "fullName email");
 
   res.status(200).json({
@@ -4516,7 +4588,7 @@ export const addAuthorizedUserToSupermarket = asyncHandelr(
 
     // ✅ تحقق إذا كان المستخدم مضاف مسبقاً
     const alreadyExists = supermarket.authorizedUsers.some(
-      (auth) => auth.user.toString() === userId
+      (auth) => auth.user.toString() === userId,
     );
     if (alreadyExists) {
       return next(new Error("المستخدم مضاف بالفعل", { cause: 400 }));
@@ -4531,14 +4603,14 @@ export const addAuthorizedUserToSupermarket = asyncHandelr(
 
     // ✅ إرجاع السوبر ماركت مع بيانات المستخدمين المصرح لهم
     const updatedSupermarket = await SupermarketModel.findById(
-      supermarket._id
+      supermarket._id,
     ).populate("authorizedUsers.user", "fullName email");
 
     res.status(200).json({
       message: "تم إضافة المستخدم المصرح له بنجاح",
       data: updatedSupermarket,
     });
-  }
+  },
 );
 
 export const getMyDoctorProfile = asyncHandelr(async (req, res, next) => {
@@ -4560,7 +4632,7 @@ export const updateDoctor = asyncHandelr(async (req, res, next) => {
     return next(
       new Error("لم يتم العثور على بيانات الطبيب أو ليس لديك صلاحية لتعديلها", {
         cause: 404,
-      })
+      }),
     );
   }
 
@@ -4588,7 +4660,7 @@ export const updateDoctor = asyncHandelr(async (req, res, next) => {
   updatedData.titles = tryParse(updatedData.titles, doctor.titles);
   updatedData.workingHours = tryParse(
     updatedData.workingHours,
-    doctor.workingHours
+    doctor.workingHours,
   );
 
   const uploadToCloud = async (file, folder) => {
@@ -4607,7 +4679,7 @@ export const updateDoctor = asyncHandelr(async (req, res, next) => {
     }
     updatedData.profileImage = await uploadToCloud(
       req.files.profileImage[0],
-      `doctors/profile`
+      `doctors/profile`,
     );
   }
 
@@ -4634,7 +4706,7 @@ export const updateDoctor = asyncHandelr(async (req, res, next) => {
             await cloud.uploader.destroy(cert.public_id);
             // مسح من الـ Array
             finalCertificates = finalCertificates.filter(
-              (c) => c.public_id !== certId
+              (c) => c.public_id !== certId,
             );
           }
         }
@@ -4656,7 +4728,7 @@ export const updateDoctor = asyncHandelr(async (req, res, next) => {
   const updatedDoctor = await DoctorModel.findOneAndUpdate(
     { _id: id, createdBy: userId },
     updatedData,
-    { new: true }
+    { new: true },
   );
 
   return res.status(200).json({
@@ -4675,7 +4747,7 @@ export const deleteDoctor = asyncHandelr(async (req, res, next) => {
     return next(
       new Error("لم يتم العثور على بيانات الطبيب أو ليس لديك صلاحية للحذف", {
         cause: 404,
-      })
+      }),
     );
   }
 
@@ -4782,7 +4854,7 @@ export const updateRestaurant = asyncHandelr(async (req, res, next) => {
 
   if (!restaurant) {
     return next(
-      new Error("المطعم غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 })
+      new Error("المطعم غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 }),
     );
   }
 
@@ -4830,7 +4902,7 @@ export const updateRestaurant = asyncHandelr(async (req, res, next) => {
 
     const uploaded = await uploadToCloud(
       req.files.image[0],
-      "restaurants/images"
+      "restaurants/images",
     );
     updatedData.image = uploaded;
   }
@@ -4856,7 +4928,7 @@ export const updateRestaurant = asyncHandelr(async (req, res, next) => {
           if (img) {
             await cloud.uploader.destroy(img.public_id);
             finalMenuImages = finalMenuImages.filter(
-              (c) => c.public_id !== imgId
+              (c) => c.public_id !== imgId,
             );
           }
         }
@@ -4881,7 +4953,7 @@ export const updateRestaurant = asyncHandelr(async (req, res, next) => {
   const updatedRestaurant = await RestaurantModell.findOneAndUpdate(
     { _id: id, createdBy: userId },
     updatedData,
-    { new: true }
+    { new: true },
   );
 
   return res.status(200).json({
@@ -4898,7 +4970,7 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
   const product = await ProductModell.findOne({ _id: id, createdBy: userId });
   if (!product) {
     return next(
-      new Error("المنتج غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 })
+      new Error("المنتج غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 }),
     );
   }
 
@@ -4979,7 +5051,7 @@ export const updateProduct = asyncHandelr(async (req, res, next) => {
   const updatedProduct = await ProductModell.findOneAndUpdate(
     { _id: id, createdBy: userId },
     updatedData,
-    { new: true }
+    { new: true },
   );
 
   return res.status(200).json({
@@ -5006,7 +5078,7 @@ export const deleteRestaurant = asyncHandelr(async (req, res, next) => {
   // ✅ التحقق أن صاحب المطعم هو نفسه المستخدم الحالي
   if (restaurant.createdBy.toString() !== req.user._id.toString()) {
     return next(
-      new Error("🚫 لا يمكنك حذف مطعم لم تقم بإنشائه", { cause: 403 })
+      new Error("🚫 لا يمكنك حذف مطعم لم تقم بإنشائه", { cause: 403 }),
     );
   }
 
@@ -5162,7 +5234,7 @@ export const deleteProduct = asyncHandelr(async (req, res, next) => {
 
   if (!product) {
     return next(
-      new Error("المنتج غير موجود أو ليس لديك صلاحية لحذفه", { cause: 404 })
+      new Error("المنتج غير موجود أو ليس لديك صلاحية لحذفه", { cause: 404 }),
     );
   }
 
@@ -5284,14 +5356,14 @@ export const createAppointment = asyncHandelr(async (req, res, next) => {
     return next(
       new Error("جميع الحقول الأساسية مطلوبة (الدكتور، اليوم، الوقت)", {
         cause: 400,
-      })
+      }),
     );
   }
 
   // ✅ تأكد أن الدكتور موجود ومعاه fcmToken
   const doctor = await DoctorModel.findById(doctorId).populate(
     "createdBy",
-    "fullName fcmToken"
+    "fullName fcmToken",
   ); // صاحب البروفايل (الدكتور نفسه)
 
   if (!doctor) {
@@ -5350,7 +5422,7 @@ export const createAppointment = asyncHandelr(async (req, res, next) => {
           console.warn(`⚠️ توكن غير صالح: ${recipient.fcmToken} - هيتم مسحه`);
           await Usermodel.updateOne(
             { _id: recipient.user },
-            { $set: { fcmToken: null } }
+            { $set: { fcmToken: null } },
           );
         } else {
           console.error("❌ فشل إرسال الإشعار:", error);
@@ -5397,14 +5469,14 @@ export const createPropertyBooking = asyncHandelr(async (req, res, next) => {
     return next(
       new Error("جميع الحقول الأساسية مطلوبة (العقار، المدة، التواريخ)", {
         cause: 400,
-      })
+      }),
     );
   }
 
   // ✅ تأكد أن العقار موجود ومعاه صاحب
   const property = await RentalPropertyModel.findById(propertyId).populate(
     "createdBy",
-    "fullName fcmToken"
+    "fullName fcmToken",
   );
 
   if (!property) {
@@ -5464,7 +5536,7 @@ export const createPropertyBooking = asyncHandelr(async (req, res, next) => {
           console.warn(`⚠️ توكن غير صالح: ${recipient.fcmToken} - هيتم مسحه`);
           await Usermodel.updateOne(
             { _id: recipient.user },
-            { $set: { fcmToken: null } }
+            { $set: { fcmToken: null } },
           );
         } else {
           console.error("❌ فشل إرسال الإشعار:", error);
@@ -5587,7 +5659,7 @@ export const markAllNotificationsAsRead = async (req, res) => {
     // تحديث كل الإشعارات الخاصة بالمطعم كـ "مقروءة"
     const result = await NotificationModell.updateMany(
       { restaurant: restaurantId, isRead: false }, // فقط غير المقروء
-      { $set: { isRead: true } }
+      { $set: { isRead: true } },
     );
 
     res.status(200).json({
@@ -5612,7 +5684,7 @@ export const markAllNotificationsAsReadDoctor = async (req, res) => {
     // تحديث كل الإشعارات الخاصة بالمطعم كـ "مقروءة"
     const result = await NotificationModell.updateMany(
       { restaurant: doctorId, isRead: false }, // فقط غير المقروء
-      { $set: { isRead: true } }
+      { $set: { isRead: true } },
     );
 
     res.status(200).json({
@@ -5638,7 +5710,7 @@ export const markAllNotificationsAsReadProperty = async (req, res) => {
     // تحديث كل الإشعارات الخاصة بالعقار كـ "مقروءة"
     const result = await NotificationModell.updateMany(
       { order: propertyId, isRead: false }, // فقط الغير مقروء
-      { $set: { isRead: true } }
+      { $set: { isRead: true } },
     );
 
     res.status(200).json({
@@ -5691,7 +5763,7 @@ export const getRestaurantOrders = asyncHandelr(async (req, res, next) => {
 
   if (!restaurantId) {
     return next(
-      new Error("يجب إدخال معرف المطعم (restaurantId)", { cause: 400 })
+      new Error("يجب إدخال معرف المطعم (restaurantId)", { cause: 400 }),
     );
   }
 
@@ -5922,7 +5994,7 @@ export const updateOrderStatus = asyncHandelr(async (req, res, next) => {
       Invoice: Invoice || "notPaid",
       ...(Object.keys(InvoicePicture).length > 0 && { InvoicePicture }),
     },
-    { new: true }
+    { new: true },
   );
 
   // 🔔 إرسال إشعار للعميل إذا تم قبول الطلب
@@ -6008,7 +6080,7 @@ export const getMyRestaurantsProducts = asyncHandelr(async (req, res, next) => {
 
   if (!restaurant) {
     return next(
-      new Error("غير مصرح لك بعرض منتجات هذا المطعم", { cause: 403 })
+      new Error("غير مصرح لك بعرض منتجات هذا المطعم", { cause: 403 }),
     );
   }
 
@@ -6044,7 +6116,7 @@ export const signupwithGmail = asyncHandelr(async (req, res, next) => {
 
   if (!email) {
     return next(
-      new Error("Email is missing in Google response", { cause: 400 })
+      new Error("Email is missing in Google response", { cause: 400 }),
     );
   }
   if (!email_verified) {
@@ -6174,7 +6246,7 @@ export const createBranch = asyncHandelr(async (req, res, next) => {
       message: "Branch created successfully",
       branch,
     },
-    201
+    201,
   );
 });
 
@@ -6217,7 +6289,7 @@ export const deleteBranch = asyncHandelr(async (req, res, next) => {
 
   if (!branch) {
     return next(
-      new Error("❌ الفرع غير موجود أو لا تملك صلاحية حذفه", { cause: 404 })
+      new Error("❌ الفرع غير موجود أو لا تملك صلاحية حذفه", { cause: 404 }),
     );
   }
 
@@ -6243,12 +6315,12 @@ export const updateBranch = asyncHandelr(async (req, res, next) => {
   const branch = await BranchModel.findOneAndUpdate(
     { _id: branchId, restaurant: userId },
     updateData,
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   if (!branch) {
     return next(
-      new Error("❌ الفرع غير موجود أو لا تملك صلاحية تعديله", { cause: 404 })
+      new Error("❌ الفرع غير موجود أو لا تملك صلاحية تعديله", { cause: 404 }),
     );
   }
 
@@ -6268,13 +6340,13 @@ export const confirmOTP = asyncHandelr(async (req, res, next) => {
 
   if (user.blockUntil && Date.now() < new Date(user.blockUntil).getTime()) {
     const remainingTime = Math.ceil(
-      (new Date(user.blockUntil).getTime() - Date.now()) / 1000
+      (new Date(user.blockUntil).getTime() - Date.now()) / 1000,
     );
     return next(
       new Error(
         `Too many attempts. Please try again after ${remainingTime} seconds.`,
-        { cause: 429 }
-      )
+        { cause: 429 },
+      ),
     );
   }
 
@@ -6302,8 +6374,8 @@ export const confirmOTP = asyncHandelr(async (req, res, next) => {
       return next(
         new Error(
           "Too many attempts. You are temporarily blocked for 2 minutes.",
-          { cause: 429 }
-        )
+          { cause: 429 },
+        ),
       );
     }
 
@@ -6315,7 +6387,7 @@ export const confirmOTP = asyncHandelr(async (req, res, next) => {
     {
       isConfirmed: true,
       $unset: { emailOTP: 0, otpExpiresAt: 0, attemptCount: 0, blockUntil: 0 },
-    }
+    },
   );
   const access_Token = generatetoken({
     payload: { id: user._id },
@@ -6363,7 +6435,7 @@ export const createSubGroup = asyncHandelr(async (req, res) => {
   if (!mainGroup) {
     res.status(404);
     throw new Error(
-      "❌ لا يمكنك إنشاء مجموعة فرعية بدون صلاحية على المجموعة الرئيسية"
+      "❌ لا يمكنك إنشاء مجموعة فرعية بدون صلاحية على المجموعة الرئيسية",
     );
   }
 
@@ -6383,7 +6455,7 @@ export const getMainGroupsForUser = asyncHandelr(async (req, res) => {
   const userId = req.user.id;
 
   const mainGroups = await MainGroupModel.find({ createdBy: userId }).select(
-    "name status createdAt"
+    "name status createdAt",
   );
 
   res.status(200).json({
@@ -6409,7 +6481,7 @@ export const getMainGroupsWithSubGroups = asyncHandelr(async (req, res) => {
   // ربط المجموعات الفرعية مع كل مجموعة رئيسية
   const result = mainGroups.map((mainGroup) => {
     const subGroups = allSubGroups.filter(
-      (sub) => sub.mainGroup.toString() === mainGroup._id.toString()
+      (sub) => sub.mainGroup.toString() === mainGroup._id.toString(),
     );
 
     return {
@@ -6463,7 +6535,7 @@ export const deleteSubGroup = asyncHandelr(async (req, res) => {
   if (!subGroup) {
     res.status(404);
     throw new Error(
-      "❌ لم يتم العثور على المجموعة الفرعية أو لا تملك صلاحية الحذف"
+      "❌ لم يتم العثور على المجموعة الفرعية أو لا تملك صلاحية الحذف",
     );
   }
 
@@ -6480,7 +6552,7 @@ export const updateMainGroup = asyncHandelr(async (req, res) => {
   const updated = await MainGroupModel.findOneAndUpdate(
     { _id: mainGroupId, createdBy: userId },
     { name, status },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   if (!updated) {
@@ -6514,7 +6586,7 @@ export const updateSubGroup = asyncHandelr(async (req, res) => {
   const updated = await SubGroupModel.findOneAndUpdate(
     { _id: subGroupId, createdBy: userId },
     { name, mainGroup: mainGroupId },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   if (!updated) {
@@ -6616,7 +6688,7 @@ export const updatePermission = asyncHandelr(async (req, res) => {
       ...(name && { name: name.toLowerCase().trim() }),
       ...(description && { description }),
     },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   if (!updated) {
@@ -6705,7 +6777,7 @@ export const createAdminUser = asyncHandelr(async (req, res) => {
   ) {
     res.status(400);
     throw new Error(
-      "❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع والصلاحيات في صورة Array"
+      "❌ جميع الحقول مطلوبة ويجب أن تكون المجموعات والفروع والصلاحيات في صورة Array",
     );
   }
 
@@ -6777,7 +6849,7 @@ export const getSubGroupsByMainGroup = asyncHandelr(async (req, res, next) => {
 
   if (!mainGroupId) {
     return next(
-      new Error("❌ يجب إرسال معرف المجموعة الرئيسية", { cause: 400 })
+      new Error("❌ يجب إرسال معرف المجموعة الرئيسية", { cause: 400 }),
     );
   }
 
@@ -6791,8 +6863,8 @@ export const getSubGroupsByMainGroup = asyncHandelr(async (req, res, next) => {
     return next(
       new Error(
         "❌ لا تملك صلاحية الوصول لهذه المجموعة الرئيسية أو غير موجودة",
-        { cause: 404 }
-      )
+        { cause: 404 },
+      ),
     );
   }
 
@@ -6892,7 +6964,7 @@ export const updateAdminUser = asyncHandelr(async (req, res) => {
   const updatedAdmin = await AdminUserModel.findOneAndUpdate(
     { _id: adminId, createdBy: userId },
     updatedData,
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   res.status(200).json({
@@ -6963,7 +7035,7 @@ export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
         .map((sub) => {
           // جلب الأسئلة المرتبطة بهذه المجموعة الفرعية
           const relatedQuestions = questions.filter(
-            (q) => q.subGroup.toString() === sub._id.toString()
+            (q) => q.subGroup.toString() === sub._id.toString(),
           );
 
           return {
@@ -6976,7 +7048,7 @@ export const getQuestionsByMainGroups = asyncHandelr(async (req, res) => {
       // حساب عدد الأسئلة في كل المجموعات الفرعية
       const totalQuestions = relatedSubGroups.reduce(
         (acc, sub) => acc + sub.questions.length,
-        0
+        0,
       );
 
       if (totalQuestions > 0) {
@@ -7042,7 +7114,7 @@ export const deleteSingleQuestion = asyncHandelr(async (req, res) => {
         questions: { _id: questionId },
       },
     },
-    { new: true }
+    { new: true },
   );
 
   if (!updated) {
@@ -7071,7 +7143,7 @@ export const updateSingleQuestion = asyncHandelr(async (req, res) => {
         "questions.$.evaluation": new mongoose.Types.ObjectId(evaluation),
       },
     },
-    { new: true }
+    { new: true },
   );
 
   if (!question) {
@@ -7171,7 +7243,7 @@ export const createSupermarket = asyncHandelr(async (req, res, next) => {
     return next(
       new Error("خطأ في صيغة JSON للـ name أو description أو pickup", {
         cause: 400,
-      })
+      }),
     );
   }
 
@@ -7181,7 +7253,7 @@ export const createSupermarket = asyncHandelr(async (req, res, next) => {
     return next(
       new Error("غير مسموح لك بإنشاء سوبر ماركت، يجب أن يكون حسابك Owner", {
         cause: 403,
-      })
+      }),
     );
   }
 
@@ -7189,7 +7261,7 @@ export const createSupermarket = asyncHandelr(async (req, res, next) => {
   const hasName = name.en || name.fr || name.ar;
   if (!hasName) {
     return next(
-      new Error("اسم السوبر ماركت مطلوب على الأقل بلغة واحدة", { cause: 400 })
+      new Error("اسم السوبر ماركت مطلوب على الأقل بلغة واحدة", { cause: 400 }),
     );
   }
 
@@ -7269,7 +7341,7 @@ export const updateSupermarket = asyncHandelr(async (req, res, next) => {
     return next(
       new Error("خطأ في صيغة JSON للـ name أو description أو pickup", {
         cause: 400,
-      })
+      }),
     );
   }
 
@@ -7285,7 +7357,7 @@ export const updateSupermarket = asyncHandelr(async (req, res, next) => {
     req.user.accountType !== "Admin"
   ) {
     return next(
-      new Error("غير مسموح لك بتعديل هذا السوبر ماركت", { cause: 403 })
+      new Error("غير مسموح لك بتعديل هذا السوبر ماركت", { cause: 403 }),
     );
   }
 
@@ -7359,7 +7431,7 @@ export const deleteSupermarket = asyncHandelr(async (req, res, next) => {
     req.user.accountType !== "Admin"
   ) {
     return next(
-      new Error("غير مسموح لك بحذف هذا السوبر ماركت", { cause: 403 })
+      new Error("غير مسموح لك بحذف هذا السوبر ماركت", { cause: 403 }),
     );
   }
 
@@ -7394,7 +7466,7 @@ export const updateSection = asyncHandelr(async (req, res, next) => {
     if (typeof description === "string") description = JSON.parse(description);
   } catch {
     return next(
-      new Error("خطأ في صيغة JSON للـ name أو description", { cause: 400 })
+      new Error("خطأ في صيغة JSON للـ name أو description", { cause: 400 }),
     );
   }
 
@@ -7405,7 +7477,7 @@ export const updateSection = asyncHandelr(async (req, res, next) => {
   });
   if (!section) {
     return next(
-      new Error("القسم غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 })
+      new Error("القسم غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 }),
     );
   }
 
@@ -7432,7 +7504,7 @@ export const deleteSection = asyncHandelr(async (req, res, next) => {
   });
   if (!section) {
     return next(
-      new Error("القسم غير موجود أو ليس لديك صلاحية لحذفه", { cause: 404 })
+      new Error("القسم غير موجود أو ليس لديك صلاحية لحذفه", { cause: 404 }),
     );
   }
 
@@ -7475,7 +7547,7 @@ export const addSection = asyncHandelr(async (req, res, next) => {
   // حقل الاسم مطلوب على الأقل بلغة واحدة
   if (!(name.en || name.fr || name.ar)) {
     return next(
-      new Error("اسم القسم مطلوب على الأقل بلغة واحدة", { cause: 400 })
+      new Error("اسم القسم مطلوب على الأقل بلغة واحدة", { cause: 400 }),
     );
   }
 
@@ -7505,7 +7577,7 @@ export const addProduct = asyncHandelr(async (req, res, next) => {
     if (typeof description === "string") description = JSON.parse(description);
   } catch (err) {
     return next(
-      new Error("خطأ في صيغة JSON للـ name أو description", { cause: 400 })
+      new Error("خطأ في صيغة JSON للـ name أو description", { cause: 400 }),
     );
   }
 
@@ -7514,7 +7586,7 @@ export const addProduct = asyncHandelr(async (req, res, next) => {
     return next(new Error("السعر مطلوب", { cause: 400 }));
   if (!(name.en || name.fr || name.ar)) {
     return next(
-      new Error("اسم المنتج مطلوب على الأقل بلغة واحدة", { cause: 400 })
+      new Error("اسم المنتج مطلوب على الأقل بلغة واحدة", { cause: 400 }),
     );
   }
 
@@ -7562,7 +7634,7 @@ export const updateProductsupermarket = asyncHandelr(async (req, res, next) => {
     if (typeof description === "string") description = JSON.parse(description);
   } catch {
     return next(
-      new Error("خطأ في صيغة JSON للـ name أو description", { cause: 400 })
+      new Error("خطأ في صيغة JSON للـ name أو description", { cause: 400 }),
     );
   }
 
@@ -7573,7 +7645,7 @@ export const updateProductsupermarket = asyncHandelr(async (req, res, next) => {
   });
   if (!product) {
     return next(
-      new Error("المنتج غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 })
+      new Error("المنتج غير موجود أو ليس لديك صلاحية لتعديله", { cause: 404 }),
     );
   }
 
@@ -7630,7 +7702,7 @@ export const deleteProducts = asyncHandelr(async (req, res, next) => {
   });
   if (!product) {
     return next(
-      new Error("المنتج غير موجود أو ليس لديك صلاحية لحذفه", { cause: 404 })
+      new Error("المنتج غير موجود أو ليس لديك صلاحية لحذفه", { cause: 404 }),
     );
   }
 
@@ -7817,7 +7889,7 @@ export const createUserByOwner = asyncHandelr(async (req, res, next) => {
 
   if (checkuser) {
     return next(
-      new Error("❌ البريد الإلكتروني مستخدم من قبل", { cause: 400 })
+      new Error("❌ البريد الإلكتروني مستخدم من قبل", { cause: 400 }),
     );
   }
 
@@ -7878,7 +7950,7 @@ export const getUsersByOwner = asyncHandelr(async (req, res, next) => {
 
   // 🔎 رجع بس الحقول المطلوبة
   const users = await Usermodel.find(filter).select(
-    "accountType email role fullName"
+    "accountType email role fullName",
   );
 
   return res.status(200).json({
@@ -8456,7 +8528,7 @@ export const updateOrderStatusSupermarket = async (req, res, next) => {
       return next(
         new Error("⚠️ لا يمكن تعديل الطلب بعد الموافقة أو إذا كان محذوفًا", {
           cause: 400,
-        })
+        }),
       );
     }
 
@@ -8481,7 +8553,7 @@ export const updateOrderStatusSupermarket = async (req, res, next) => {
         Invoice: Invoice || "notPaid",
         ...(Object.keys(InvoicePicture).length > 0 && { InvoicePicture }),
       },
-      { new: true }
+      { new: true },
     )
       .populate("user", "fullName phone email")
       .populate("products.product", "name price images");
@@ -8727,7 +8799,9 @@ export const getAcceptedOrders = asyncHandelr(async (req, res, next) => {
 
     if (!latitude || !longitude) {
       return next(
-        new Error("يرجى إدخال الإحداثيات (latitude, longitude)", { cause: 400 })
+        new Error("يرجى إدخال الإحداثيات (latitude, longitude)", {
+          cause: 400,
+        }),
       );
     }
 
@@ -9183,17 +9257,17 @@ export const getDriverOrdersStats = async (req, res, next) => {
 
     // ✅ إحصائيات
     const acceptedCount = allOrders.filter(
-      (o) => o.status === "accepted"
+      (o) => o.status === "accepted",
     ).length;
     const deliveredCount = allOrders.filter(
-      (o) => o.status === "delivered"
+      (o) => o.status === "delivered",
     ).length;
     const cancelledCount = allOrders.filter(
-      (o) => o.status === "cancelled"
+      (o) => o.status === "cancelled",
     ).length;
     const totalEarnings = allOrders.reduce(
       (sum, o) => sum + (o.finalPrice || o.totalPrice || 0),
-      0
+      0,
     );
 
     // ✅ النتيجة النهائية
@@ -9297,7 +9371,7 @@ export const getDeliveredOrdersByDriver = asyncHandelr(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export const uploadImages = asyncHandelr(async (req, res, next) => {
@@ -9353,8 +9427,8 @@ export const createOrder = asyncHandelr(async (req, res, next) => {
     return next(
       new Error(
         "جميع الحقول الأساسية مطلوبة (المطعم، رقم التواصل، المنتجات، السعر)",
-        { cause: 400 }
-      )
+        { cause: 400 },
+      ),
     );
   }
 
@@ -9373,7 +9447,7 @@ export const createOrder = asyncHandelr(async (req, res, next) => {
   // ✅ حساب المسافة بالكيلومتر
   const distanceMeters = haversine(
     { lat: userCoords.latitude, lon: userCoords.longitude },
-    { lat: restaurantCoords.latitude, lon: restaurantCoords.longitude }
+    { lat: restaurantCoords.latitude, lon: restaurantCoords.longitude },
   );
   const distanceKm = distanceMeters / 1000;
 
@@ -9486,7 +9560,7 @@ export const createOrderSupermarket = async (req, res, next) => {
     // ✅ حساب المسافة بالكيلومتر
     const distanceMeters = haversine(
       { lat: userCoords.latitude, lon: userCoords.longitude },
-      { lat: supermarketCoords.latitude, lon: supermarketCoords.longitude }
+      { lat: supermarketCoords.latitude, lon: supermarketCoords.longitude },
     );
     const distanceKm = distanceMeters / 1000;
 
@@ -9725,7 +9799,7 @@ export const updateSubscription = asyncHandelr(async (req, res, next) => {
   const daysLeft = moment(newEndDate).diff(moment(now), "days");
   const daysUsed = moment(now).diff(
     moment(user.subscription.startDate),
-    "days"
+    "days",
   );
 
   return res.status(200).json({
@@ -10011,14 +10085,14 @@ export const getRideRequestById = async (req, res) => {
     const ridesWithExtra = await Promise.all(
       rides.map(async (ride) => {
         const client = await Usermodel.findById(ride.clientId).select(
-          "fullName"
+          "fullName",
         );
         return {
           ...ride,
           rideId: ride._id,
           clientName: client ? client.fullName : "غير معروف",
         };
-      })
+      }),
     );
 
     return res.status(200).json({
@@ -10088,7 +10162,7 @@ export const deleteUserByAdmin = asyncHandelr(async (req, res, next) => {
   return successresponse(
     res,
     `✅ تم حذف المستخدم (${userToDelete.fullName || "بدون اسم"}) بنجاح`,
-    200
+    200,
   );
 });
 
@@ -10109,7 +10183,7 @@ export const createReport = asyncHandelr(async (req, res, next) => {
 
   if (!contact || !message) {
     return next(
-      new Error("❌ برجاء إدخال وسيلة تواصل والرسالة", { cause: 400 })
+      new Error("❌ برجاء إدخال وسيلة تواصل والرسالة", { cause: 400 }),
     );
   }
 
@@ -10242,7 +10316,7 @@ export const updateMyProfile = asyncHandelr(async (req, res, next) => {
   if (req.files?.profiePicture?.[0]) {
     uploadedFiles.profiePicture = await uploadToCloud(
       req.files.profiePicture[0],
-      `users/profilePictures`
+      `users/profilePictures`,
     );
   } else {
     uploadedFiles.profiePicture = user.profiePicture;
@@ -10252,9 +10326,9 @@ export const updateMyProfile = asyncHandelr(async (req, res, next) => {
   const updatedUser = await Usermodel.findByIdAndUpdate(
     userId,
     { ...updatedData, ...uploadedFiles },
-    { new: true }
+    { new: true },
   ).select(
-    "fullName email phone totalPoints modelcar serviceType carImages profiePicture"
+    "fullName email phone totalPoints modelcar serviceType carImages profiePicture",
   );
 
   return res.status(200).json({
