@@ -1352,6 +1352,40 @@ export const loginRestaurant = asyncHandelr(async (req, res, next) => {
 });
 
 
+export const deleteFcmToken = asyncHandelr(async (req, res, next) => {
+
+  const userId = req.user._id;
+
+  const updatedUser = await Usermodel.findByIdAndUpdate(
+    userId,
+    {
+      $set: { fcmToken: null }
+    },
+    {
+      new: true, 
+      select: "-password" 
+    }
+  );
+
+  if (!updatedUser) {
+    return next(new Error("User not found", { cause: 404 }));
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "FCM token deleted successfully",
+    data: {
+      user: {
+        _id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        fcmToken: updatedUser.fcmToken 
+      }
+    }
+  });
+});
+
+
 export const getMyProfile = async (req, res, next) => {
     try {
         const userId = req.user._id; // ✅ جاي من التوكن

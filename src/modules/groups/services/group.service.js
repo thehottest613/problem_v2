@@ -189,15 +189,27 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
   const group = await GroupModel.findById(groupId)
     .populate({
       path: "messages.sender",
-      select: "username email avatar",
+      select: "username email ImageId",
+      populate: {
+        path: "ImageId",
+        select: "image", // Select the 'image' object which contains secure_url
+      },
     })
     .populate({
       path: "admin",
-      select: "username email avatar",
+      select: "username email ImageId",
+      populate: {
+        path: "ImageId",
+        select: "image",
+      },
     })
     .populate({
       path: "activeUsers.user",
-      select: "username email avatar",
+      select: "username email ImageId",
+      populate: {
+        path: "ImageId",
+        select: "image",
+      },
     });
 
   if (!group) {
@@ -225,7 +237,7 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
             _id: group.admin._id,
             username: group.admin.username,
             email: group.admin.email,
-            avatar: group.admin.avatar,
+            image: group.admin.ImageId?.image?.secure_url || null, // Access secure_url
           }
         : null,
       activeUsers: group.activeUsers.map((au) => ({
@@ -234,7 +246,7 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
               _id: au.user._id,
               username: au.user.username,
               email: au.user.email,
-              avatar: au.user.avatar,
+              image: au.user.ImageId?.image?.secure_url || null, // Access secure_url
             }
           : null,
         joinedAt: au.joinedAt,
@@ -255,10 +267,10 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
                   _id: msg.sender._id,
                   username: msg.sender.username,
                   email: msg.sender.email,
-                  avatar: msg.sender.avatar,
+                  image: msg.sender.ImageId?.image?.secure_url || null, // Access secure_url
                 }
               : null,
-            type: "deleted", // or keep original type if you prefer
+            type: "deleted",
             content: null,
             image: null,
             voice: null,
@@ -266,7 +278,7 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
             deletedAt: msg.deletedAt || msg.updatedAt,
             createdAt: msg.createdAt,
             updatedAt: msg.updatedAt,
-            replyTo: null, // no reply shown for deleted messages
+            replyTo: null,
           };
         }
 
@@ -278,7 +290,7 @@ export const getGroupMessages = asyncHandelr(async (req, res, next) => {
                 _id: msg.sender._id,
                 username: msg.sender.username,
                 email: msg.sender.email,
-                avatar: msg.sender.avatar,
+                image: msg.sender.ImageId?.image?.secure_url || null, // Access secure_url
               }
             : null,
           content: msg.content,

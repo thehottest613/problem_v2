@@ -178,6 +178,7 @@ import {
   resendOTP,
   resetpassword,
   resetPasswordphone,
+  deleteFcmToken,
   uploadCartoonImage,
   verifyOTP,
 } from "./service/authontecation.service.js";
@@ -207,14 +208,14 @@ routr.post(
     { name: "profileImage", maxCount: 1 },
     { name: "certificates", maxCount: 10 },
   ]),
-  createDoctor
+  createDoctor,
 );
 
 routr.post(
   "/uploadCartoonImage",
 
   uploadCloudFile(fileValidationTypes.image).single("image"),
-  uploadCartoonImage
+  uploadCartoonImage,
 );
 
 routr.patch(
@@ -227,7 +228,7 @@ routr.patch(
     { name: "profileImage", maxCount: 1 },
     { name: "certificates", maxCount: 10 },
   ]),
-  updateDoctor
+  updateDoctor,
 );
 
 routr.post(
@@ -243,7 +244,7 @@ routr.post(
     { name: "carImages", maxCount: 10 },
     { name: "Insurancedocuments", maxCount: 1 },
   ]),
-  signupServiceProvider
+  signupServiceProvider,
 );
 
 routr.post(
@@ -255,13 +256,13 @@ routr.post(
   ]).fields([
     { name: "images", maxCount: 10 }, // صور العقار
   ]),
-  createRentalProperty
+  createRentalProperty,
 );
 
 routr.get(
   "/getAllPaidServicesadmin",
 
-  getAllPaidServicesadmin
+  getAllPaidServicesadmin,
 );
 
 routr.post(
@@ -274,7 +275,7 @@ routr.post(
     { name: "image", maxCount: 10 },
     { name: "menuImages", maxCount: 10 }, // صور العقار
   ]),
-  createRestaurant
+  createRestaurant,
 );
 
 routr.patch(
@@ -287,7 +288,7 @@ routr.patch(
     { name: "carImages", maxCount: 10 },
     { name: "profiePicture", maxCount: 10 }, // صور العقار
   ]),
-  updateMyProfile
+  updateMyProfile,
 );
 
 routr.post(
@@ -295,7 +296,7 @@ routr.post(
   authentication(),
 
   uploadCloudFile(fileValidationTypes.image).array("images"),
-  uploadImages
+  uploadImages,
 );
 
 routr.post(
@@ -308,7 +309,7 @@ routr.post(
     { name: "image", maxCount: 1 }, // cover image
     { name: "bannerImages", maxCount: 10 }, // banners
   ]),
-  createSupermarket
+  createSupermarket,
 );
 
 routr.patch(
@@ -321,7 +322,7 @@ routr.patch(
     { name: "image", maxCount: 1 }, // cover image
     { name: "bannerImages", maxCount: 10 }, // banners
   ]),
-  updateSupermarket
+  updateSupermarket,
 );
 
 routr.post(
@@ -330,7 +331,7 @@ routr.post(
   uploadCloudFile([...fileValidationTypes.image]).fields([
     { name: "images", maxCount: 10 },
   ]),
-  addProduct
+  addProduct,
 );
 
 routr.post(
@@ -341,7 +342,7 @@ routr.post(
     ...fileValidationTypes.document,
   ]).fields([{ name: "images", maxCount: 10 }]),
   checkRestaurantPermission(["manager"]),
-  createProduct
+  createProduct,
 );
 
 routr.post("/signup", signup);
@@ -354,7 +355,7 @@ routr.post("/createOrder", authentication(), createOrder);
 routr.post("/loginAdmin", loginAdmin);
 routr.post(
   "/markAllNotificationsAsReadDoctor/:doctorId",
-  markAllNotificationsAsReadDoctor
+  markAllNotificationsAsReadDoctor,
 );
 routr.post("/createAppointment", authentication(), createAppointment);
 
@@ -383,7 +384,7 @@ routr.post("/reactToPost/:postId", authentication(), reactToPost);
 routr.post(
   "/MarkAllNotificationsAsRead",
   authentication(),
-  MarkAllNotificationsAsRead
+  MarkAllNotificationsAsRead,
 );
 
 routr.post("/changeUserLanguage", authentication(), changeUserLanguage);
@@ -405,6 +406,7 @@ routr.get("/getMyPosts", authentication(), getMyPosts);
 routr.get("/getAllAdmins", authentication(), getAllAdmins);
 
 routr.get("/getUserProfile", authentication(), getUserProfile);
+routr.delete("/fcm-token", authentication(), deleteFcmToken);
 
 routr.delete("/deletePost/:postId", authentication(), deletePost);
 
@@ -433,13 +435,13 @@ routr.get("/getOwnerRestaurants", authentication(), getOwnerRestaurants);
 routr.get(
   "/getMyRestaurantsProducts/:restaurantId",
   authentication(),
-  getMyRestaurantsProducts
+  getMyRestaurantsProducts,
 );
 routr.get("/getProductsByRestaurant/:restaurantId", getProductsByRestaurant);
 routr.get(
   "/getUserRentalProperties",
   authentication(),
-  getUserRentalProperties
+  getUserRentalProperties,
 );
 
 routr.get("/getRestaurantOrders/:restaurantId", getRestaurantOrders);
@@ -451,7 +453,7 @@ routr.patch(
   ]).fields([
     { name: "image", maxCount: 10 }, // صور العقار
   ]),
-  updateOrderStatusSupermarket
+  updateOrderStatusSupermarket,
 );
 
 routr.post(
@@ -459,7 +461,7 @@ routr.post(
   uploadCloudFile(fileValidationTypes.image).fields([
     { name: "servicePicture", maxCount: 1 },
   ]),
-  createService
+  createService,
 );
 
 routr.post(
@@ -468,7 +470,7 @@ routr.post(
   uploadCloudFile(fileValidationTypes.image).fields([
     { name: "invoiceImage", maxCount: 1 },
   ]),
-  createPaidService
+  createPaidService,
 );
 
 routr.post(
@@ -477,7 +479,7 @@ routr.post(
   uploadCloudFile(fileValidationTypes.image).fields([
     { name: "invoiceImage", maxCount: 1 },
   ]),
-  createPaidServiceDrivers
+  createPaidServiceDrivers,
 );
 
 routr.patch(
@@ -486,7 +488,7 @@ routr.patch(
   uploadCloudFile(fileValidationTypes.image).fields([
     { name: "images", maxCount: 10 },
   ]),
-  updateProductsupermarket
+  updateProductsupermarket,
 );
 
 routr.patch(
@@ -494,7 +496,7 @@ routr.patch(
   uploadCloudFile(fileValidationTypes.image).fields([
     { name: "servicePicture", maxCount: 1 },
   ]),
-  updateService
+  updateService,
 );
 routr.post("/addAuthorizedUser", authentication(), addAuthorizedUser);
 routr.get("/getAcceptedOrders", getAcceptedOrders);
@@ -502,26 +504,26 @@ routr.get("/getServices", getServices);
 routr.get("/getSupermarketOrders/:supermarketId", getSupermarketOrders);
 routr.get(
   "/getSupermarketNotifications/:supermarketId",
-  getSupermarketNotifications
+  getSupermarketNotifications,
 );
 routr.post("/createOrderSupermarket", authentication(), createOrderSupermarket);
 routr.get("/getMyProfile", authentication(), getMyProfile);
 routr.get(
   "/getAccessibleSupermarket",
   authentication(),
-  getAccessibleSupermarket
+  getAccessibleSupermarket,
 );
 
 routr.get(
   "/getSupermarketWithSectionsAndProducts/:supermarketId",
   authentication(),
-  getSupermarketWithSectionsAndProducts
+  getSupermarketWithSectionsAndProducts,
 );
 
 routr.post(
   "/addAuthorizedUserToSupermarket",
   authentication(),
-  addAuthorizedUserToSupermarket
+  addAuthorizedUserToSupermarket,
 );
 
 routr.patch("/updateUserByOwner/:id", authentication(), updateUserByOwner);
@@ -553,7 +555,7 @@ routr.patch(
   uploadCloudFile([...fileValidationTypes.image]).fields([
     { name: "images", maxCount: 10 },
   ]),
-  updateProduct
+  updateProduct,
 );
 
 routr.patch(
@@ -566,7 +568,7 @@ routr.patch(
     { name: "image", maxCount: 1 }, // الصورة الرئيسية للمطعم
     { name: "menuImages", maxCount: 10 }, // صور قائمة الطعام
   ]),
-  updateRestaurant
+  updateRestaurant,
 );
 
 routr.get("/getDeliveredOrdersByDriver", getDeliveredOrdersByDriver);
@@ -584,7 +586,7 @@ routr.patch(
   ]).fields([
     { name: "images", maxCount: 10 }, // صور العقار
   ]),
-  updateRentalProperty
+  updateRentalProperty,
 );
 routr.post("/confirEachOtp", confirEachOtp);
 
@@ -600,7 +602,7 @@ routr.post("/createBranch", authentication(), createBranch);
 routr.delete(
   "/deleteRentalProperty/:id",
   authentication(),
-  deleteRentalProperty
+  deleteRentalProperty,
 );
 routr.post("/loginRestaurant", loginRestaurant);
 routr.post("/resendOTP", resendOTP);
@@ -616,7 +618,7 @@ routr.post("/confirmOTP", confirmOTP);
 
 routr.get(
   "/getNotificationsByRestaurant/:restaurantId",
-  getNotificationsByRestaurant
+  getNotificationsByRestaurant,
 );
 
 routr.patch(
@@ -627,7 +629,7 @@ routr.patch(
   ]).fields([
     { name: "image", maxCount: 10 }, // صور الفاتورة
   ]),
-  updateOrderStatus
+  updateOrderStatus,
 );
 
 routr.get("/getAllNormalUsers", getAllNormalUsers);
@@ -635,11 +637,11 @@ routr.get("/getSupermarketAdmin", getSupermarketAdmin);
 routr.get("/getPropertyBookings/:propertyId", getPropertyBookings);
 routr.get(
   "/getNotificationsByProperty/:propertyId",
-  getNotificationsByProperty
+  getNotificationsByProperty,
 );
 routr.patch(
   "/markAllNotificationsAsReadProperty/:propertyId",
-  markAllNotificationsAsReadProperty
+  markAllNotificationsAsReadProperty,
 );
 routr.get("/getAllServiceProviders", getAllServiceProviders);
 
@@ -656,7 +658,7 @@ routr.get("/getMainGroupsForUser", authentication(), getMainGroupsForUser);
 routr.get(
   "/getMainGroupsWithSubGroups",
   authentication(),
-  getMainGroupsWithSubGroups
+  getMainGroupsWithSubGroups,
 );
 
 routr.delete("/deleteBranch/:id", authentication(), deleteBranch);
@@ -701,18 +703,18 @@ routr.get("/getEvaluations", authentication(), getEvaluations);
 routr.get(
   "/getQuestionsByMainGroups",
   authentication(),
-  getQuestionsByMainGroups
+  getQuestionsByMainGroups,
 );
 routr.get("/getAllPermissions", getAllPermissions);
 routr.post(
   "/markAllNotificationsAsRead/:restaurantId",
-  markAllNotificationsAsRead
+  markAllNotificationsAsRead,
 );
 
 routr.get(
   "/getSubGroupsByMainGroup/:mainGroupId",
   authentication(),
-  getSubGroupsByMainGroup
+  getSubGroupsByMainGroup,
 );
 
 routr.post(
@@ -721,7 +723,7 @@ routr.post(
   uploadCloudFile(fileValidationTypes.image).fields([
     { name: "image", maxCount: 1 }, // ✅ صورة واحدة فقط
   ]),
-  createAdminUser
+  createAdminUser,
 );
 
 routr.patch(
@@ -730,7 +732,7 @@ routr.patch(
   uploadCloudFile(fileValidationTypes.image).fields([
     { name: "image", maxCount: 1 }, // ✅ صورة واحدة فقط
   ]),
-  updateAdminUser
+  updateAdminUser,
 );
 
 routr.get("/getAllAdminUsers", authentication(), getAllAdminUsers);
