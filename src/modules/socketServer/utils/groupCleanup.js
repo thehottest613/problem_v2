@@ -61,10 +61,8 @@ const kickInactiveUsers = async () => {
     const THIRTY_MINUTES = 20 * 60 * 1000;
     const usersToKick = [];
 
-    // Step 1: Collect candidates and clean guests/admins
     for (const [userIdStr, groupSessions] of userGroupActivity.entries()) {
       for (const [groupId, activity] of [...groupSessions.entries()]) {
-        // copy to avoid mutation issues during iteration
 
         const group = await GroupModel.findById(groupId);
         if (!group) {

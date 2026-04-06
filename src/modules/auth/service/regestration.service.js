@@ -3448,13 +3448,13 @@ export const searchUserByEmail = asyncHandelr(async (req, res) => {
 export const updateUserRole = asyncHandelr(async (req, res) => {
   const { userId } = req.params;
   const { role } = req.body;
-
-  // التحقق من صلاحية الأدمن
-  // if (req.user.role !== "Admin" && req.user.role !== "Owner") {
-  //     return res.status(403).json({ message: "❌ غير مصرح لك بتغيير أدوار المستخدمين" });
-  // }
-
-  // قائمة الأدوار المسموحة (عدلها حسب احتياجك)
+  const caller = req.user;
+  if (caller.role !== "Admin" && caller.role !== "Owner") {
+    return res.status(403).json({
+      message: "forbidden action",
+      validRoles,
+    });
+  }
   const validRoles = [
     "User",
     "Admin",
@@ -3465,7 +3465,7 @@ export const updateUserRole = asyncHandelr(async (req, res) => {
   ];
   if (!validRoles.includes(role)) {
     return res.status(400).json({
-      message: "❌ الدور غير صالح",
+      message: "الدور غير صالح",
       validRoles,
     });
   }
@@ -3475,11 +3475,6 @@ export const updateUserRole = asyncHandelr(async (req, res) => {
   if (!user) {
     return res.status(404).json({ message: "❌ المستخدم غير موجود" });
   }
-
-  // اختياري: منع تغيير دور Owner إلا لـ Owner آخر
-  // if (user.role === "Owner" && req.user.role !== "Owner") {
-  //     return res.status(403).json({ message: "❌ لا يمكن تغيير دور المالك" });
-  // }
 
   user.role = role;
   await user.save();
@@ -3498,34 +3493,18 @@ export const updateUserRole = asyncHandelr(async (req, res) => {
 export const deleteUser = asyncHandelr(async (req, res) => {
   const { userId } = req.params;
 
-  // التحقق من صلاحية الأدمن أو المالك
-  // if (req.user.role !== "Admin" && req.user.role !== "Owner") {
-  //     return res.status(403).json({
-  //         message: "❌ غير مصرح لك بحذف المستخدمين"
-  //     });
-  // }
-
   const userToDelete = await Usermodel.findById(userId);
 
   if (!userToDelete) {
     return res.status(404).json({ message: "❌ المستخدم غير موجود" });
   }
 
-  // منع حذف Owner إلا بواسطة Owner آخر
-  // if (userToDelete.role === "Owner" && req.user.role !== "Owner") {
-  //     return res.status(403).json({
-  //         message: "❌ لا يمكن حذف حساب المالك إلا بواسطة مالك آخر"
-  //     });
-  // }
-
-  // منع حذف نفسك
   if (userToDelete._id.toString() === req.user._id.toString()) {
     return res.status(400).json({
       message: "❌ لا يمكنك حذف حسابك الخاص",
     });
   }
 
-  // حذف المستخدم نهائيًا
   await Usermodel.findByIdAndDelete(userId);
 
   res.status(200).json({
@@ -3660,74 +3639,6 @@ export const getActivePrivacyPolicy = asyncHandelr(async (req, res) => {
   });
 });
 
-// export const getDriverStats = asyncHandelr(async (req, res) => {
-//     const { driverId } = req.params;
-
-//     if (!driverId) {
-//         return res.status(400).json({
-//             success: false,
-//             message: "❌ لازم تبعت driverId",
-//         });
-//     }
-
-//     const finishedStatuses = ["ongoing finished", "DONE"];
-//     const now = new Date();
-
-//     // حساب بداية اليوم
-//     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-//     // حساب بداية الأسبوع (الاثنين)
-//     const startOfWeek = new Date(now);
-//     startOfWeek.setDate(now.getDate() - now.getDay() + 1);
-//     startOfWeek.setHours(0, 0, 0, 0);
-//     // حساب بداية الشهر
-//     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-//     // 🟢 جميع الرحلات المنتهية
-//     const finishedRides = await rideSchema.find({
-//         driverId,
-//         status: { $in: finishedStatuses },
-//     });
-
-//     // 🟠 الرحلات الملغاة
-//     const cancelledCount = await rideSchema.countDocuments({
-//         driverId,
-//         status: "CANCELLED",
-//     });
-
-//     // ✅ إجمالي الأرباح الكلي
-//     const totalEarnings = finishedRides.reduce((sum, ride) => sum + (ride.price || 0), 0);
-
-//     // ✅ الرحلات اليوم
-//     const todayRides = finishedRides.filter(ride => new Date(ride.createdAt) >= startOfDay);
-//     const todayCount = todayRides.length;
-//     const todayEarnings = todayRides.reduce((sum, ride) => sum + (ride.price || 0), 0);
-
-//     // ✅ الرحلات هذا الأسبوع
-//     const weekRides = finishedRides.filter(ride => new Date(ride.createdAt) >= startOfWeek);
-//     const weekCount = weekRides.length;
-//     const weekEarnings = weekRides.reduce((sum, ride) => sum + (ride.price || 0), 0);
-
-//     // ✅ الرحلات هذا الشهر
-//     const monthRides = finishedRides.filter(ride => new Date(ride.createdAt) >= startOfMonth);
-//     const monthCount = monthRides.length;
-//     const monthEarnings = monthRides.reduce((sum, ride) => sum + (ride.price || 0), 0);
-
-//     return res.status(200).json({
-//         success: true,
-//         message: "✅ تم جلب الإحصائيات بنجاح",
-//         data: {
-//             cancelledCount,
-//             finishedCount: finishedRides.length,
-//             totalEarnings,
-//             stats: {
-//                 today: { count: todayCount, earnings: todayEarnings },
-//                 week: { count: weekCount, earnings: weekEarnings },
-//                 month: { count: monthCount, earnings: monthEarnings },
-//             }
-//         }
-//     });
-// });
-
 export const getDriverStats = asyncHandelr(async (req, res) => {
   const { driverId } = req.params;
 
@@ -3741,34 +3652,27 @@ export const getDriverStats = asyncHandelr(async (req, res) => {
   const finishedStatuses = ["ongoing finished", "DONE"];
   const now = new Date();
 
-  // حساب بداية اليوم
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  // حساب بداية الأسبوع (الاثنين)
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay() + 1);
   startOfWeek.setHours(0, 0, 0, 0);
-  // حساب بداية الشهر
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // 🟢 جميع الرحلات المنتهية
   const finishedRides = await rideSchema.find({
     driverId,
     status: { $in: finishedStatuses },
   });
 
-  // 🟠 الرحلات الملغاة
   const cancelledCount = await rideSchema.countDocuments({
     driverId,
     status: "CANCELLED",
   });
 
-  // ✅ إجمالي الأرباح الكلي
   const totalEarnings = finishedRides.reduce(
     (sum, ride) => sum + (ride.price || 0),
     0,
   );
 
-  // ✅ الرحلات اليوم
   const todayRides = finishedRides.filter(
     (ride) => new Date(ride.createdAt) >= startOfDay,
   );
@@ -3778,7 +3682,6 @@ export const getDriverStats = asyncHandelr(async (req, res) => {
     0,
   );
 
-  // ✅ الرحلات هذا الأسبوع
   const weekRides = finishedRides.filter(
     (ride) => new Date(ride.createdAt) >= startOfWeek,
   );
